@@ -1,3 +1,8 @@
+target_dir <- Sys.getenv("TARGET_DIR", "../work")
+target <- function(...) {
+  file.path(target_dir, ...)
+}
+
 time_install <- function(pkgname, type = "source", ...) {
   pkgs <- as.data.frame(available.packages(repos = "https://cloud.r-project.org"), stringsAsFactors = FALSE)
   # https://cran.r-project.org/src/contrib/BH_1.75.0-0.tar.gz
@@ -14,9 +19,8 @@ time_install <- function(pkgname, type = "source", ...) {
   on.exit(if (file.exists(pkgfile)) unlink(pkgfile))
 
   res <- system.time({
-    install.packages(pkgfile, repos = NULL, type = type, ...)
+    utils::install.packages(pkgfile, repos = NULL, type = type, ...)
   })
-  remove.packages(pkgname)
 
   res
 }
