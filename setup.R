@@ -1,3 +1,5 @@
+renv::restore()
+
 source("_functions.R")
 
 dir.create(target(), recursive = TRUE, showWarnings = FALSE)
