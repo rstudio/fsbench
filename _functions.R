@@ -1,4 +1,4 @@
-target_dir <- Sys.getenv("TARGET_DIR", "../work")
+target_dir <- Sys.getenv("TARGET_DIR", "../fsbench.work")
 target <- function(...) {
   file.path(target_dir, ...)
 }
@@ -23,4 +23,13 @@ time_install <- function(pkgname, type = "source", ...) {
   })
 
   res
+}
+
+write_random_csv <- function(path, bytes) {
+  rows <- 0.0291268 * bytes
+
+  df <- data.frame(x1 = runif(rows), x2 = runif(rows))
+  system.time({
+    data.table::fwrite(df, file = path, row.names = FALSE, col.names = FALSE)
+  })
 }
