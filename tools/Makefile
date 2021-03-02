@@ -1,6 +1,6 @@
 EUID    := $(shell id -u -r)
 
-purge:
+purge: purge.c
 ifneq ($(EUID),0)
 	@echo "Root or sudo is required" >&2
 	@exit 1

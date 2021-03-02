@@ -3,6 +3,26 @@ target <- function(...) {
   file.path(target_dir, ...)
 }
 
+times <- list()
+
+benchmark_begin <- function() {
+  times <<- list()
+}
+
+benchmark <- function(name, task) {
+  dump_cache()
+  force(task)
+  if (!inherits(task, "proc_time")) {
+    warning("Task '", name, "' returned wrong object type. Expected 'proc_time', got '", class(task)[1], "'")
+  } else {
+    times[[name]] <<- task
+  }
+}
+
+benchmark_end <- function() {
+  print(times)
+}
+
 time_install <- function(pkgname, type = "source", ...) {
   pkgs <- as.data.frame(available.packages(repos = "https://cloud.r-project.org"), stringsAsFactors = FALSE)
   # https://cran.r-project.org/src/contrib/BH_1.75.0-0.tar.gz
@@ -32,4 +52,12 @@ write_random_csv <- function(path, bytes) {
   system.time({
     data.table::fwrite(df, file = path, row.names = FALSE, col.names = FALSE)
   })
+}
+
+dump_cache <- function() {
+  if (Sys.info()["sysname"] %in% c("Darwin", "Linux")) {
+    system("tools/purge")
+  } else {
+    warning("Clearing disk cache is not possible on this platform, benchmark results are unreliable!")
+  }
 }
