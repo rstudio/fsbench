@@ -6,5 +6,5 @@ ifneq ($(EUID),0)
 	@exit 1
 endif
 	gcc purge.c -o purge
-	chown root:root purge
+	chown root purge
 	chmod 6711 purge

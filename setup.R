@@ -6,7 +6,7 @@ dir.create(target(), recursive = TRUE, showWarnings = FALSE)
 
 # --- Download CRAN logs from 2020-01-01 to 2020-03-31 ----
 local({
-  op <- options(timeout = Inf, warn = 2)
+  op <- options(timeout = 99999, warn = 2)
   on.exit(options(op), add = TRUE)
 
   dir.create(target("cranlogs"), recursive = TRUE, showWarnings = FALSE)
@@ -32,7 +32,7 @@ local({
       next
     }
     tryCatch(
-      download.file(names(todo), todo, method = "libcurl", quiet = TRUE),
+      download.file(names(todo), unname(todo), method = "libcurl", quiet = TRUE),
       error = function(e) {
         unlink(todo, recursive = FALSE)
         stop(e)
