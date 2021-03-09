@@ -25,7 +25,20 @@ benchmark <- function(name, task) {
 }
 
 benchmark_end <- function() {
-  print(times)
+  df <- do.call(rbind, unname(lapply(times, function(proc_time) {
+    pt <- summary(proc_time)
+    data.frame(user = pt[[1]], system = pt[[2]], elapsed = pt[[3]])
+  })))
+  df <- cbind(data.frame(task = names(times), stringsAsFactors = FALSE), df)
+  df <- tibble::as_tibble(df)
+
+  results_filename <- Sys.getenv("OUTPUT_FILE", "")
+  if (!nzchar(results_filename)) {
+    results_filename <- paste0("results-", format(Sys.time(), format = "%Y%m%d-%H%M%S"), ".csv")
+    message("No OUTPUT_FILE env var; writing to ", results_filename)
+  }
+  write.csv(df, results_filename, row.names = FALSE)
+  print(df)
 }
 
 time_install <- function(pkgname, type = "source", ...) {
