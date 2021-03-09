@@ -36,6 +36,10 @@ local({
       error = function(e) {
         unlink(todo, recursive = FALSE)
         stop(e)
+      },
+      interrupt = function(e) {
+        unlink(todo, recursive = FALSE)
+        stop(e)
       }
     )
   }
