@@ -10,6 +10,11 @@ benchmark_begin <- function() {
 }
 
 benchmark <- function(name, task) {
+  message("
+# ================================================
+# Task: ", name, "
+# ================================================
+")
   dump_cache()
   force(task)
   if (!inherits(task, "proc_time")) {

@@ -11,7 +11,7 @@ local({
 
   dir.create(target("cranlogs"), recursive = TRUE, showWarnings = FALSE)
   start_date <- as.Date("2020-01-01")
-  end_date <- as.Date("2020-03-31")
+  end_date <- as.Date("2020-01-14")
   chunk_size <- 7 # number of days to download at a time (approx)
   dates <- as.character(seq(start_date, to = end_date, by = "day"))
   date_chunks <- split(dates, as.integer(cut(seq_along(dates), ceiling(length(dates) / chunk_size))))

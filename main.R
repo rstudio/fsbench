@@ -1,10 +1,10 @@
 library(data.table)
+library(R.utils) # needed for fread to read .gz files
+library(vroom)
 
 source("_functions.R")
 
 benchmark_begin()
-
-times <- list()
 
 dir.create(target("lib"), recursive = TRUE, showWarnings = FALSE)
 
@@ -35,7 +35,22 @@ unlink(target("1gb.csv"))
 
 # Read CRAN logs =========
 
-# benchmark("Read CRAN logs" <- local({
-# })
+benchmark("Read 14 days of CRAN logs with fread", system.time({
+  for (file in sort(dir(target("cranlogs"), full.names = TRUE))) {
+    message(basename(file))
+    fread_df <- data.table::fread(file, showProgress = FALSE)
+    table(fread_df$country)
+  }
+}))
+
+benchmark("Sample 5000 rows from each of 14 CRAN logs with vroom", system.time({
+  for (file in sort(dir(target("cranlogs"), full.names = TRUE))) {
+    message(basename(file))
+    vroom_df <- vroom(file, progress = FALSE, col_types = "Dtdccccccd",
+      col_names = c("date","time","size","r_version","r_arch","r_os","package","version","country","ip_id")
+    )
+    sample(vroom_df$country, 5000)
+  }
+}))
 
 benchmark_end()
