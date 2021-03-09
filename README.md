@@ -26,7 +26,7 @@ This will run for several minutes and then dump some timing information to the s
 
 Two environment variables can be used to configure fsbench:
 
-* `TARGET_DIR` defaults to `../fsbench.work` and controls where data will be written to/read from. This should be a directory path located on the filesystem you want to test, and needs to be set for both `make setup` and `make`. fsbench will attempt to create the directory if it does not exist.
+* `TARGET_DIR` defaults to `../fsbench.work` and controls where data will be written to/read from. This should be a directory path located on the filesystem you want to test, and needs to be set for both `make setup` and `make`. fsbench will attempt to create the directory if it does not exist. This directory must NOT be a subdirectory of the fsbench directory, otherwise the package installation benchmarks will throw confusing errors.
 
 * `OUTPUT_FILE` defaults to `./results-<date>-<time>.csv` and indicates the path where the benchmark results should be recorded, as CSV data. (The same results are always printed to the screen, in tabular form.)
 
