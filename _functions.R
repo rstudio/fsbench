@@ -50,8 +50,8 @@ time_install <- function(pkgname, type = "source", ...) {
   }
   stopifnot(nrow(pkgs) == 1)
 
-  pkgfile <- paste0(pkgname, "_", pkgs$Version, ".tar.gz")
-  url <- file.path(pkgs$Repository, pkgfile)
+  pkgfile <- target(paste0(pkgname, "_", pkgs$Version, ".tar.gz"))
+  url <- file.path(pkgs$Repository, basename(pkgfile))
 
   download.file(url, pkgfile)
   on.exit(if (file.exists(pkgfile)) unlink(pkgfile))
@@ -74,7 +74,7 @@ write_random_csv <- function(path, bytes) {
 
 dump_cache <- function() {
   if (Sys.info()["sysname"] %in% c("Darwin", "Linux")) {
-    system("tools/purge")
+    system("/usr/local/sbin/purge-disk-cache")
   } else {
     warning("Clearing disk cache is not possible on this platform, benchmark results are unreliable!")
   }

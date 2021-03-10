@@ -2,5 +2,6 @@ main:
 	Rscript main.R
 
 setup:
-	sudo make -C tools
+	make -C tools
+	sudo make -C tools install
 	Rscript setup.R
