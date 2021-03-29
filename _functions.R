@@ -5,6 +5,10 @@ target <- function(...) {
 
 times <- list()
 
+# construct a static 100MB dataframe
+static_df_rows <- 0.0291268 * 100*1024*1024
+static_df <- data.frame(x1 = runif(static_df_rows), x2 = runif(static_df_rows))
+
 benchmark_begin <- function() {
   times <<- list()
 }
@@ -22,6 +26,23 @@ benchmark <- function(name, task) {
   } else {
     times[[name]] <<- task
   }
+}
+
+aggregate_benchmark <- function(name, iterations, task) {
+  dump_cache()
+
+  # perform the timer on the entire set of iterations instead of timing each
+  # iteration individually - we need to do this because the overhead of using
+  # system.time is HUGE! calling this in a loop is disastrous for performance,
+  # and thus causes very inaccurate benchmarks. as a result, each iteration
+  # should strive to minimize calls unrelated to the actual filesystem being tested
+  aggregate_time = system.time({
+    for (i in 1:iterations) {
+      task(i)
+    }
+  })
+
+  times[[name]] <<- aggregate_time
 }
 
 benchmark_end <- function() {
@@ -70,6 +91,14 @@ write_random_csv <- function(path, bytes) {
   system.time({
     data.table::fwrite(df, file = path, row.names = FALSE, col.names = FALSE)
   })
+}
+
+write_static_csv <- function(path, num_files, num_iter) {
+  num_rows <- as.integer(static_df_rows / num_files)
+  start <- (num_iter - 1) * num_rows
+  end <- start + num_rows
+  sub_df <- static_df[start:end, ]
+  data.table::fwrite(sub_df, file = path, row.names = FALSE, col.names = FALSE)
 }
 
 dump_cache <- function() {
