@@ -31,6 +31,11 @@ benchmark <- function(name, task) {
 aggregate_benchmark <- function(name, iterations, task) {
   dump_cache()
 
+  # perform the timer on the entire set of iterations instead of timing each
+  # iteration individually - we need to do this because the overhead of using
+  # system.time is HUGE! calling this in a loop is disastrous for performance,
+  # and thus causes very inaccurate benchmarks. as a result, each iteration
+  # should strive to minimize calls unrelated to the actual filesystem being tested
   aggregate_time = system.time({
     for (i in 1:iterations) {
       task(i)
