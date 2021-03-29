@@ -107,6 +107,13 @@
       "Repository": "RSPM",
       "Hash": "fea074fb67fe4c25d47ad09087da847d"
     },
+    "fst": {
+      "Package": "fst",
+      "Version": "0.9.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "66c2d5dffed8d181b9555617beb2d0f9"
+    },
     "glue": {
       "Package": "glue",
       "Version": "1.4.2",
