@@ -17,15 +17,15 @@ unlink(target("lib"), recursive = TRUE)
 
 # Write, then read, 1GB CSV =========
 
-benchmark("base::write.csv, 10KB", write_random_csv(target("10kb.csv"), 10*1024))
-benchmark("base::write.csv, 1MB", write_random_csv(target("1mb.csv"), 1024*1024))
-benchmark("base::write.csv, 100MB", write_random_csv(target("100mb.csv"), 100*1024*1024))
-benchmark("base::write.csv, 1GB", write_random_csv(target("1gb.csv"), 1024*1024*1024))
+benchmark("Write CSV, 10KB", write_random_csv(target("10kb.csv"), 10*1024))
+benchmark("Write CSV, 1MB", write_random_csv(target("1mb.csv"), 1024*1024))
+benchmark("Write CSV, 100MB", write_random_csv(target("100mb.csv"), 100*1024*1024))
+benchmark("Write CSV, 1GB", write_random_csv(target("1gb.csv"), 1024*1024*1024))
 
-benchmark("base::read.csv, 10KB", system.time({ data.table::fread(target("10kb.csv")) }))
-benchmark("base::read.csv, 1MB", system.time({ data.table::fread(target("1mb.csv")) }))
-benchmark("base::read.csv, 100MB", system.time({ data.table::fread(target("100mb.csv")) }))
-benchmark("base::read.csv, 1GB", system.time({ data.table::fread(target("1gb.csv")) }))
+benchmark("Read CSV, 10KB", system.time({ data.table::fread(target("10kb.csv")) }))
+benchmark("Read CSV, 1MB", system.time({ data.table::fread(target("1mb.csv")) }))
+benchmark("Read CSV, 100MB", system.time({ data.table::fread(target("100mb.csv")) }))
+benchmark("Read CSV, 1GB", system.time({ data.table::fread(target("1gb.csv")) }))
 
 unlink(target("10kb.csv"))
 unlink(target("1mb.csv"))
@@ -37,11 +37,11 @@ for (i in 1:4) {
   num_files <- 10 ^ i
   file_size <- 100*1024*1024 / num_files
 
-  aggregate_benchmark(sprintf("base::write.csv, 100MB over %s files", num_files), num_files, function(iter) {
+  aggregate_benchmark(sprintf("Write CSV, 100MB over %s files", num_files), num_files, function(iter) {
     write_static_csv(target(sprintf("small_%s.csv", iter)), num_files, iter)
   })
 
-  aggregate_benchmark(sprintf("base::read.csv, 100MB over %s files", num_files), num_files, function(iter) {
+  aggregate_benchmark(sprintf("Read CSV, 100MB over %s files", num_files), num_files, function(iter) {
     data.table::fread(target(sprintf("small_%s.csv", iter)))
   })
 
