@@ -32,6 +32,23 @@ unlink(target("1mb.csv"))
 unlink(target("100mb.csv"))
 unlink(target("1gb.csv"))
 
+# Small files tests =========
+for (i in 1:4) {
+  num_files <- 10 ^ i
+  file_size <- 100*1024*1024 / num_files
+
+  aggregate_benchmark(sprintf("base::write.csv, 100MB over %s files", num_files), num_files, function(iter) {
+    write_static_csv(target(sprintf("small_%s.csv", iter)), num_files, iter)
+  })
+
+  aggregate_benchmark(sprintf("base::read.csv, 100MB over %s files", num_files), num_files, function(iter) {
+    data.table::fread(target(sprintf("small_%s.csv", iter)))
+  })
+
+  for (j in 1:num_files) {
+    unlink(target(sprintf("small_%s.csv", j)))
+  }
+}
 
 # Read CRAN logs =========
 
