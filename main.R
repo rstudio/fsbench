@@ -112,8 +112,8 @@ unlink(target("small-parallel_*.dat"))
 # ===============================================================================================================
 
 # FST tests =====================================================================================================
-Generate a random data frame (approximately 1GB of data), save it to disk,
-then perform random read tests of different lengths on the file
+# Generate a random data frame (approximately 1GB of data), save it to disk,
+# then perform random read tests of different lengths on the file
 size_100mb <- 100*1024*1024
 num_rows <- 0.0625 * size_100mb
 size_per_row <- size_100mb / num_rows
