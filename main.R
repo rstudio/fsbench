@@ -84,7 +84,7 @@ for (i in 1:4) {
 # Parallel small file tests =====================================================================================
 for (i in 1:4) {
   num_writers <- 2^i
-  benchmark(sprintf("Parallel DD write, 10MB over 1000 files with %d simultaneous writers", num_writers), system.time({
+  benchmark(sprintf("Parallel DD write, 10MB over 1000 files * %d simultaneous writers", num_writers), system.time({
     mclapply(1:num_writers, function(id) {
       for (j in 1:1000) {
         file <- target(sprintf("small-parallel_%d_%d.dat", id, j))
@@ -97,7 +97,7 @@ for (i in 1:4) {
 
 for (i in 1:4) {
   num_readers <- 2^i
-  benchmark(sprintf("Parallel DD read, 10MB over 1000 files with %d simultaneous readers", num_readers), system.time({
+  benchmark(sprintf("Parallel DD read, 10MB over 1000 files * %d simultaneous readers", num_readers), system.time({
     mclapply(1:num_readers, function(id) {
       for (j in 1:1000) {
         file <- target(sprintf("small-parallel_%d_%d.dat", id, j))
