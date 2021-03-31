@@ -1,5 +1,6 @@
 library(data.table)
 library(fst)
+library(parallel)
 library(R.utils) # needed for fread to read .gz files
 library(vroom)
 
@@ -9,15 +10,16 @@ benchmark_begin()
 
 dir.create(target("lib"), recursive = TRUE, showWarnings = FALSE)
 
+# Install common R packages =====================================================================================
 benchmark("Install MASS", time_install("MASS", lib = target("lib")))
 benchmark("Install lattice", time_install("lattice", lib = target("lib")))
 benchmark("Install BH", time_install("BH", lib = target("lib")))
 
 utils::remove.packages(c("MASS", "lattice", "BH"), lib = target("lib"))
 unlink(target("lib"), recursive = TRUE)
+# ===============================================================================================================
 
-# Write, then read, 1GB CSV =========
-
+# Write, then read, 1GB CSV =====================================================================================
 benchmark("base::write.csv, 10KB", write_random_csv(target("10kb.csv"), 10*1024))
 benchmark("base::write.csv, 1MB", write_random_csv(target("1mb.csv"), 1024*1024))
 benchmark("base::write.csv, 100MB", write_random_csv(target("100mb.csv"), 100*1024*1024))
@@ -32,8 +34,35 @@ unlink(target("10kb.csv"))
 unlink(target("1mb.csv"))
 unlink(target("100mb.csv"))
 unlink(target("1gb.csv"))
+# ===============================================================================================================
 
-# Small files tests =========
+# Parallel tests with 1GB readers/writers =======================================================================
+for (i in 1:4) {
+  num_writers <- 2^i
+  benchmark(sprintf("Parallel DD write, 1GB * %d simultaneous writers", num_writers), system.time({
+    mclapply(1:num_writers, function(id) {
+      file <- target(sprintf("parallel_%d.dat", id))
+      command <- sprintf("dd if=/dev/zero of=%s bs=1048576 count=1024 conv=sync oflag=nocache", file)
+      system(command)
+    }, mc.preschedule = FALSE, mc.cores = num_writers)
+  }))
+}
+
+for (i in 1:4) {
+  num_readers <- 2^i
+  benchmark(sprintf("Parallel DD read, 1GB * %d simultaneous readers", num_readers), system.time({
+    mclapply(1:num_readers, function(id) {
+      file <- target(sprintf("parallel_%d.dat", id))
+      command <- sprintf("dd if=%s of=/dev/null bs=1048576 count=1024 iflag=nocache", file)
+      system(command)
+    }, mc.preschedule = FALSE, mc.cores = num_readers)
+  }))
+}
+
+unlink(target("parallel_*.dat"))
+# ===============================================================================================================
+
+# Small files tests =============================================================================================
 for (i in 1:4) {
   num_files <- 10 ^ i
   file_size <- 100*1024*1024 / num_files
@@ -50,8 +79,39 @@ for (i in 1:4) {
     unlink(target(sprintf("small_%s.csv", j)))
   }
 }
+# ===============================================================================================================
 
-# FST tests ========
+# Parallel small file tests =====================================================================================
+for (i in 1:4) {
+  num_writers <- 2^i
+  benchmark(sprintf("Parallel DD write, 10MB over 1000 files * %d simultaneous writers", num_writers), system.time({
+    mclapply(1:num_writers, function(id) {
+      for (j in 1:1000) {
+        file <- target(sprintf("small-parallel_%d_%d.dat", id, j))
+        command <- sprintf("dd if=/dev/zero of=%s bs=1024 count=10 conv=sync oflag=nocache", file)
+        system(command, ignore.stdout = TRUE, ignore.stderr = TRUE)
+      }
+    }, mc.preschedule = FALSE, mc.cores = num_writers)
+  }))
+}
+
+for (i in 1:4) {
+  num_readers <- 2^i
+  benchmark(sprintf("Parallel DD read, 10MB over 1000 files * %d simultaneous readers", num_readers), system.time({
+    mclapply(1:num_readers, function(id) {
+      for (j in 1:1000) {
+        file <- target(sprintf("small-parallel_%d_%d.dat", id, j))
+        command <- sprintf("dd if=%s of=/dev/null bs=1024 count=10 iflag=nocache", file)
+        system(command, ignore.stdout = TRUE, ignore.stderr = TRUE)
+      }
+    }, mc.preschedule = FALSE, mc.cores = num_readers)
+  }))
+}
+
+unlink(target("small-parallel_*.dat"))
+# ===============================================================================================================
+
+# FST tests =====================================================================================================
 # Generate a random data frame (approximately 1GB of data), save it to disk,
 # then perform random read tests of different lengths on the file
 size_100mb <- 100*1024*1024
@@ -105,9 +165,9 @@ benchmark("FST random reads, 100MB over 10000*10KB reads", system.time({
 }))
 
 unlink(target("dataset.fst"))
+#================================================================================================================
 
-# Read CRAN logs =========
-
+# Read CRAN logs ================================================================================================
 benchmark("Read 14 days of CRAN logs with fread", system.time({
   for (file in sort(dir(target("cranlogs"), full.names = TRUE))) {
     message(basename(file))
@@ -125,5 +185,6 @@ benchmark("Sample 5000 rows from each of 14 CRAN logs with vroom", system.time({
     sample(vroom_df$country, 5000)
   }
 }))
+# ===============================================================================================================
 
 benchmark_end()
