@@ -1,4 +1,5 @@
 library(ggplot2)
+library(ggpubr)
 library(stringr)
 
 # Compare multiple benchmark runs, generating graphs for each unique filesystem
@@ -71,3 +72,26 @@ if (num_fs > 1) {
 }
 
 # plot the data row by row, one plot per row in the data frame
+plots <- list()
+for (i in 1:nrow(final_data_frame)) {
+  row <- final_data_frame[i, ]
+  task <- row[1]
+
+  x_vals <- c()
+  y_vals <- c()
+  for (j in 2:ncol(row)) {
+    fs <- str_split(colnames(row)[j], fixed("_"), 2)[[1]][2]
+    x_vals <- append(x_vals, fs)
+    y_vals <- append(y_vals, row[[j]])
+  }
+
+  plot_data <- data.frame(x_vals, y_vals)
+  plot <- ggplot(data=plot_data, aes(x=x_vals, y=y_vals, fill=x_vals)) +
+          geom_bar(stat="identity") +
+          geom_text(aes(label=y_vals), vjust=1.6, color="black", size=3.5) +
+          labs(title=task, x="File System", y="Time taken (seconds)")
+
+  plots[[i]] = plot
+}
+
+final_plot <- ggarrange(plotlist=plots)
