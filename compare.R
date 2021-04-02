@@ -104,6 +104,12 @@ for (i in 1:nrow(final_data_frame)) {
 }
 
 final_plot <- ggarrange(plotlist=plots, ncol=3, nrow=ceiling(length(plots)/3))
-ggsave("plot-results.png", plot=final_plot)
 
-cat("Plot saved to plot-results.png")
+plot_filename <- Sys.getenv("PLOT_FILE", "")
+if (!nzchar(plot_filename)) {
+  plot_filename <- "plot-results.png"
+  message("No PLOT_FILE env var; writing plot results to ", plot_filename)
+}
+
+ggsave(plot_filename, plot=final_plot)
+cat("Plot saved to ", plot_filename)
