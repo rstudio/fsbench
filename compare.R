@@ -5,8 +5,14 @@ library(stringr)
 # Compare multiple benchmark runs, generating graphs for each unique filesystem
 # Multiple runs for the same filesystem are averaged together
 
-#args = commandArgs(trailingOnly = TRUE)
-args = list("ssd=*ssd.csv", "efs=*efs.csv")
+args = commandArgs(trailingOnly = TRUE)
+
+if (length(args) == 0) {
+  msg <- "No arguments specified.
+Must specify one or more filesystem runs to display in the form <file system name>=<benchmark files glob>
+Example: Rscript compare.R ssd=*ssd.csv efs=*efs.csv"
+  stop(msg)
+}
 
 files_to_read <- list()
 for (arg in args) {
@@ -75,7 +81,10 @@ if (num_fs > 1) {
 plots <- list()
 for (i in 1:nrow(final_data_frame)) {
   row <- final_data_frame[i, ]
-  task <- row[1]
+  task <- row[[1]]
+
+  # constrain the width of the title by inserting line breaks
+  task <- paste(strwrap(task, width = 30), collapse="\n")
 
   x_vals <- c()
   y_vals <- c()
@@ -88,10 +97,13 @@ for (i in 1:nrow(final_data_frame)) {
   plot_data <- data.frame(x_vals, y_vals)
   plot <- ggplot(data=plot_data, aes(x=x_vals, y=y_vals, fill=x_vals)) +
           geom_bar(stat="identity") +
-          geom_text(aes(label=y_vals), vjust=1.6, color="black", size=3.5) +
-          labs(title=task, x="File System", y="Time taken (seconds)")
+          labs(title=task, x="File System", y="Seconds") +
+          theme(plot.title=element_text(size=7, face="bold"))
 
   plots[[i]] = plot
 }
 
-final_plot <- ggarrange(plotlist=plots)
+final_plot <- ggarrange(plotlist=plots, ncol=3, nrow=ceiling(length(plots)/3))
+ggsave("plot-results.png", plot=final_plot)
+
+cat("Plot saved to plot-results.png")
