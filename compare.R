@@ -1,5 +1,4 @@
 library(ggplot2)
-library(ggpubr)
 library(stringr)
 
 # Compare multiple benchmark runs, generating graphs for each unique filesystem
@@ -63,7 +62,7 @@ final_data_frame <- data.frame()
 num_fs <- length(attributes(results)[[1]])
 final_data_frame <- results[[1]]
 final_data_frame <- final_data_frame[,c("task", "average")]
-colnames(final_data_frame)[2] <- sprintf("average_%s", attributes(results)[[1]][1])
+colnames(final_data_frame)[2] <- sprintf("%s", attributes(results)[[1]][1])
 
 if (num_fs > 1) {
   for (i in 2:num_fs) {
@@ -71,39 +70,30 @@ if (num_fs > 1) {
 
     df <- results[[filesystem_name]]
     sub_df <- df[,c("task", "average")]
-    colnames(sub_df)[2] <- sprintf("average_%s", filesystem_name)
+    colnames(sub_df)[2] <- sprintf("%s", filesystem_name)
 
     final_data_frame <- merge(final_data_frame, sub_df, all.x = TRUE, by.x = "task", by.y = "task")
   }
 }
 
-# plot the data row by row, one plot per row in the data frame
-plots <- list()
-for (i in 1:nrow(final_data_frame)) {
-  row <- final_data_frame[i, ]
-  task <- row[[1]]
-
-  # constrain the width of the title by inserting line breaks
-  task <- paste(strwrap(task, width = 30), collapse="\n")
-
-  x_vals <- c()
-  y_vals <- c()
-  for (j in 2:ncol(row)) {
-    fs <- str_split(colnames(row)[j], fixed("_"), 2)[[1]][2]
-    x_vals <- append(x_vals, fs)
-    y_vals <- append(y_vals, row[[j]])
-  }
-
-  plot_data <- data.frame(x_vals, y_vals)
-  plot <- ggplot(data=plot_data, aes(x=x_vals, y=y_vals, fill=x_vals)) +
-          geom_bar(stat="identity") +
-          labs(title=task, x="File System", y="Seconds") +
-          theme(plot.title=element_text(size=7, face="bold"))
-
-  plots[[i]] = plot
+observations <- c()
+groupings <- c()
+filesystems <- c()
+for (i in 2:ncol(final_data_frame)) {
+  observations <- append(observations, final_data_frame[[i]])
+  groupings <- append(groupings, final_data_frame[[1]])
+  filesystems <- append(filesystems, rep(colnames(final_data_frame)[i], nrow(final_data_frame)))
 }
 
-final_plot <- ggarrange(plotlist=plots, ncol=3, nrow=ceiling(length(plots)/3))
+final_data_frame <- data.frame(observation = observations,
+                               grouping = groupings,
+                               filesystem = filesystems)
+
+plot <- ggplot(data=final_data_frame, aes(filesystem, observation, fill=filesystem)) +
+  geom_bar(stat="identity") +
+  labs(x="File System", y="Seconds") +
+  theme(plot.title=element_text(size=7, face="bold")) +
+  facet_wrap(grouping ~ ., scales="free")
 
 plot_filename <- Sys.getenv("PLOT_FILE", "")
 if (!nzchar(plot_filename)) {
@@ -111,5 +101,5 @@ if (!nzchar(plot_filename)) {
   message("No PLOT_FILE env var; writing plot results to ", plot_filename)
 }
 
-ggsave(plot_filename, plot=final_plot)
+ggsave(plot_filename, plot=plot)
 cat("Plot saved to ", plot_filename)
