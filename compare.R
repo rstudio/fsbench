@@ -82,6 +82,10 @@ filesystems <- c()
 for (i in 2:ncol(final_data_frame)) {
   observations <- append(observations, final_data_frame[[i]])
   groupings <- append(groupings, final_data_frame[[1]])
+  groupings <- sapply(groupings, function(val) {
+    # make the titles shorter width wise by inserting newlines every X characters
+    val <- paste(strwrap(val, width = 30), collapse="\n")
+  })
   filesystems <- append(filesystems, rep(colnames(final_data_frame)[i], nrow(final_data_frame)))
 }
 
@@ -92,7 +96,7 @@ final_data_frame <- data.frame(observation = observations,
 plot <- ggplot(data=final_data_frame, aes(filesystem, observation, fill=filesystem)) +
   geom_bar(stat="identity") +
   labs(x="File System", y="Seconds") +
-  theme(plot.title=element_text(size=7, face="bold"), axis.text.x=element_blank()) +
+  theme(axis.text.x=, strip.text.x = element_text(size = 7)) +
   facet_wrap(grouping ~ ., scales="free")
 
 plot_filename <- Sys.getenv("PLOT_FILE", "")
