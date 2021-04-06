@@ -92,7 +92,7 @@ final_data_frame <- data.frame(observation = observations,
 plot <- ggplot(data=final_data_frame, aes(filesystem, observation, fill=filesystem)) +
   geom_bar(stat="identity") +
   labs(x="File System", y="Seconds") +
-  theme(plot.title=element_text(size=7, face="bold")) +
+  theme(plot.title=element_text(size=7, face="bold"), axis.text.x=element_blank()) +
   facet_wrap(grouping ~ ., scales="free")
 
 plot_filename <- Sys.getenv("PLOT_FILE", "")
