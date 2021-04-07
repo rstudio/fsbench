@@ -24,67 +24,32 @@ if (length(bad_glob) > 0) {
   stop(sprintf("No files found for glob argument '%s'", files_to_read[[bad_glob[1]]]))
 }
 
-results <- list()
-for (filesystem_name in attributes(files_to_read)[[1]]) {
-  files <- files_to_read[[filesystem_name]]
+final_data_frame <- do.call(rbind, mapply(names(files_to_read), files_to_read, FUN = function(fs, files) {
+  # Read each file into a separate data frame, using read.csv(stringsAsFactors=FALSE)
+  data_frames <- lapply(files, read.csv, stringsAsFactors = FALSE)
+  # Combine all data frames into a single data frame
+  data_frame_all <- do.call(rbind, data_frames)
+  # This factor() call is necessary to prevent aggregate() from reordering
+  # by task, alphabetically
+  data_frame_all$task <- factor(data_frame_all$task, unique(data_frame_all$task))
+  # Break data frame into groups of rows based on `task`, then calculate
+  # mean(elapsed), and return the result as a data frame
+  data_frame_mean <- aggregate(elapsed ~ task, data_frame_all, mean)
+  # Return the data in the shape that we ultimately want
+  data.frame(
+    filesystem = fs,
+    grouping = data_frame_mean$task,
+    observation = data_frame_mean$elapsed
+  )
+}, SIMPLIFY = FALSE, USE.NAMES = FALSE))
 
-  # combine each of the runs for this particular filesystem
-  aggregate_data_frame <- data.frame(matrix(ncol = 4))
-  colnames(aggregate_data_frame) <- c("task", "user", "system", "elapsed")
-  for (file in files) {
-    data_frame <- read.csv(file)
-    aggregate_data_frame <- merge(data_frame, aggregate_data_frame, all.x = TRUE, by.x = "task", by.y = "task")
-  }
-
-  # average each of the elapsed columns together
-  col_names <- c()
-  for (column in colnames(aggregate_data_frame)) {
-    if (startsWith(column, "elapsed")) {
-      col_names <- append(col_names, c(column))
-    }
-  }
-
-  data_frame_subset <- aggregate_data_frame[, col_names]
-  aggregate_data_frame["average"] = rowMeans(data_frame_subset, na.rm = TRUE)
-
-  results[[filesystem_name]] = aggregate_data_frame
-}
-
-# combine all filesystem data frames into one final clean data frame
-final_data_frame <- data.frame()
-num_fs <- length(attributes(results)[[1]])
-final_data_frame <- results[[1]]
-final_data_frame <- final_data_frame[,c("task", "average")]
-colnames(final_data_frame)[2] <- sprintf("%s", attributes(results)[[1]][1])
-
-if (num_fs > 1) {
-  for (i in 2:num_fs) {
-    filesystem_name <- attributes(results)[[1]][i]
-
-    df <- results[[filesystem_name]]
-    sub_df <- df[,c("task", "average")]
-    colnames(sub_df)[2] <- sprintf("%s", filesystem_name)
-
-    final_data_frame <- merge(final_data_frame, sub_df, all.x = TRUE, by.x = "task", by.y = "task")
-  }
-}
-
-observations <- c()
-groupings <- c()
-filesystems <- c()
-for (i in 2:ncol(final_data_frame)) {
-  observations <- append(observations, final_data_frame[[i]])
-  groupings <- append(groupings, final_data_frame[[1]])
-  groupings <- sapply(groupings, function(val) {
-    # make the titles shorter width wise by inserting newlines every X characters
-    val <- paste(strwrap(val, width = 30), collapse="\n")
-  })
-  filesystems <- append(filesystems, rep(colnames(final_data_frame)[i], nrow(final_data_frame)))
-}
-
-final_data_frame <- data.frame(observation = observations,
-                               grouping = groupings,
-                               filesystem = filesystems)
+# Rewrap group; this results in a list, each element of which is a character
+# vector of length >= 1
+final_data_frame$grouping <- lapply(final_data_frame$grouping, strwrap, width = 30)
+# Join each character vector's elements, using \n
+final_data_frame$grouping <- vapply(final_data_frame$grouping, paste, character(1), collapse = "\n")
+# Again, need to use factor() to prevent ggplot2 from reordering
+final_data_frame$grouping <- factor(final_data_frame$grouping, unique(final_data_frame$grouping))
 
 plot <- ggplot(data=final_data_frame, aes(filesystem, observation, fill=filesystem)) +
   geom_bar(stat="identity") +
