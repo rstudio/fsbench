@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.0.2",
+    "Version": "4.0.4",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -48,14 +48,14 @@
       "Package": "R6",
       "Version": "2.5.0",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Hash": "b203113193e70978a696b2809525649d"
     },
     "RColorBrewer": {
       "Package": "RColorBrewer",
       "Version": "1.1-2",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "e031418365a7f7a766181ab5a41a5716"
     },
     "Rcpp": {
@@ -76,35 +76,35 @@
       "Package": "bit",
       "Version": "4.0.4",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "f36715f14d94678eea9933af927bc15d"
     },
     "bit64": {
       "Package": "bit64",
       "Version": "4.0.5",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "9fe98599ca456d6552421db0d6772d8f"
     },
     "cli": {
       "Package": "cli",
       "Version": "2.3.1",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "3e3f28efcadfda442cd18651fbcbbecf"
     },
     "colorspace": {
       "Package": "colorspace",
       "Version": "2.0-0",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "abea3384649ef37f60ef51ce002f3547"
     },
     "cpp11": {
       "Package": "cpp11",
       "Version": "0.2.6",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "f08909ebdad90b19d8d3930da4220564"
     },
     "crayon": {
@@ -125,7 +125,7 @@
       "Package": "digest",
       "Version": "0.6.27",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Hash": "a0cbe758a531d054b537d16dff4d58a1"
     },
     "ellipsis": {
@@ -146,35 +146,35 @@
       "Package": "farver",
       "Version": "2.1.0",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "c98eb5133d9cb9e1622b8691487f11bb"
     },
     "fst": {
       "Package": "fst",
       "Version": "0.9.4",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Hash": "66c2d5dffed8d181b9555617beb2d0f9"
     },
     "ggplot2": {
       "Package": "ggplot2",
       "Version": "3.3.3",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "3eb6477d01eb5bbdc03f7d5f70f2733e"
     },
     "glue": {
       "Package": "glue",
       "Version": "1.4.2",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Hash": "6efd734b14c6471cfe443345f3e35e29"
     },
     "gtable": {
       "Package": "gtable",
       "Version": "0.3.0",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "ac5c6baf7822ce8732b343f14c072c4d"
     },
     "hms": {
@@ -188,14 +188,14 @@
       "Package": "isoband",
       "Version": "0.2.4",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "b2008df40fb297e3fef135c7e8eeec1a"
     },
     "labeling": {
       "Package": "labeling",
       "Version": "0.4.2",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "3d5108641f47470611a32d0bdf357a72"
     },
     "lattice": {
@@ -216,7 +216,7 @@
       "Package": "magrittr",
       "Version": "2.0.1",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Hash": "41287f1ac7d28a92f0a286ed507928d3"
     },
     "mgcv": {
@@ -230,7 +230,7 @@
       "Package": "munsell",
       "Version": "0.5.0",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "6dfe8bf774944bd5595785e3229d8771"
     },
     "nlme": {
@@ -244,7 +244,7 @@
       "Package": "pillar",
       "Version": "1.5.1",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "24622aa4a0d3de3463c34513edca99b2"
     },
     "pkgconfig": {
@@ -293,28 +293,14 @@
       "Package": "scales",
       "Version": "1.1.1",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "6f76f71042411426ec8df6c54f34e6dd"
-    },
-    "stringi": {
-      "Package": "stringi",
-      "Version": "1.5.3",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "a063ebea753c92910a4cca7b18bc1f05"
-    },
-    "stringr": {
-      "Package": "stringr",
-      "Version": "1.4.0",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Hash": "0759e6b6c0957edb1311028a49a35e76"
     },
     "tibble": {
       "Package": "tibble",
       "Version": "3.1.0",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "4d894a114dbd4ecafeda5074e7c538e6"
     },
     "tidyselect": {
@@ -342,7 +328,7 @@
       "Package": "viridisLite",
       "Version": "0.3.0",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "ce4f6271baa94776db692f1cb2055bee"
     },
     "vroom": {
@@ -356,7 +342,7 @@
       "Package": "withr",
       "Version": "2.4.1",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Hash": "caf4781c674ffa549a4676d2d77b13cc"
     }
   }

@@ -1,5 +1,4 @@
 library(ggplot2)
-library(stringr)
 
 # Compare multiple benchmark runs, generating graphs for each unique filesystem
 # Multiple runs for the same filesystem are averaged together
@@ -13,22 +12,16 @@ Example: Rscript compare.R ssd=*ssd.csv efs=*efs.csv"
   stop(msg)
 }
 
-files_to_read <- list()
-for (arg in args) {
-  arg_pieces <- str_split(arg, fixed("="), 2)
-  if (is.na(arg_pieces[[1]][2])) {
-    stop(sprintf("Invalid argument %s specified. Must be of the form <file system name>=<benchmark files glob>", arg))
-  }
-
-  filesystem_name <- arg_pieces[[1]][1]
-  glob <- arg_pieces[[1]][2]
-
-  files <- Sys.glob(glob)
-  if (length(files) == 0) {
-    stop(sprintf("No files found for glob argument %s", glob))
-  }
-
-  files_to_read[[filesystem_name]] = files
+parsed_args <- regmatches(args, regexec("^(.+?)=(.+)$", args))
+bad_args <- which(vapply(parsed_args, length, integer(1)) == 0)
+if (length(bad_args) > 0) {
+  stop(sprintf("Invalid argument '%s' specified. Must be of the form <file system name>=<benchmark files glob>", args[[bad_args[1]]]))
+}
+arg_matrix <- do.call(rbind, parsed_args)
+files_to_read <- setNames(lapply(arg_matrix[,3], Sys.glob), arg_matrix[,2])
+bad_glob <- which(vapply(files_to_read, length, integer(1)) == 0)
+if (length(bad_glob) > 0) {
+  stop(sprintf("No files found for glob argument '%s'", files_to_read[[bad_glob[1]]]))
 }
 
 results <- list()
