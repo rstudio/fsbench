@@ -1,0 +1,17 @@
+"task","user","system","elapsed"
+"Parallel DD write, 1GB * 2 simultaneous writers",0.0149999999999999,1.148,18.112
+"Parallel DD write, 1GB * 4 simultaneous writers",0.038,3.556,37.687
+"Parallel DD write, 1GB * 8 simultaneous writers",0.0510000000000002,8.427,72.729
+"Parallel DD write, 1GB * 16 simultaneous writers",0.172,18.286,141.196
+"Parallel DD read, 1GB * 2 simultaneous readers",0.0159999999999998,0.613000000000002,16.58
+"Parallel DD read, 1GB * 4 simultaneous readers",0.00900000000000001,2.118,32.735
+"Parallel DD read, 1GB * 8 simultaneous readers",0.0589999999999998,5.814,67.055
+"Parallel DD read, 1GB * 16 simultaneous readers",0.175,13.11,134.167
+"Parallel DD write, 10MB over 1000 files with 2 simultaneous writers",1.361,0.274000000000001,1.93300000000011
+"Parallel DD write, 10MB over 1000 files with 4 simultaneous writers",2.739,0.479000000000009,3.39400000000001
+"Parallel DD write, 10MB over 1000 files with 8 simultaneous writers",9.535,1.707,6.55999999999995
+"Parallel DD write, 10MB over 1000 files with 16 simultaneous writers",20.676,3.53700000000001,13.149
+"Parallel DD read, 10MB over 1000 files with 2 simultaneous readers",1.369,0.219999999999994,2.10599999999999
+"Parallel DD read, 10MB over 1000 files with 4 simultaneous readers",4.04,0.629,3.28599999999994
+"Parallel DD read, 10MB over 1000 files with 8 simultaneous readers",9.361,1.531,6.33000000000004
+"Parallel DD read, 10MB over 1000 files with 16 simultaneous readers",18.772,3.208,12.701
