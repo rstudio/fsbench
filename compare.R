@@ -8,7 +8,7 @@ save_plot <- function(plot, filename) {
   cat("Plot saved to ", filename)
 }
 
-args = commandArgs(trailingOnly = TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) == 0) {
   msg <- "No arguments specified.
