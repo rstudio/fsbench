@@ -13,7 +13,10 @@ benchmark_begin <- function() {
   times <<- list()
 }
 
-benchmark <- function(name, task) {
+benchmark <- function(name, task, parallelism = NA) {
+  if (!is.na(parallelism)) {
+    name <- sprintf("%s(%d)", name, parallelism)
+  }
   message("
 # ================================================
 # Task: ", name, "
@@ -24,7 +27,7 @@ benchmark <- function(name, task) {
   if (!inherits(task, "proc_time")) {
     warning("Task '", name, "' returned wrong object type. Expected 'proc_time', got '", class(task)[1], "'")
   } else {
-    times[[name]] <<- task
+    times[[name]] <<- list(time=task, parallelism=parallelism)
   }
 }
 
@@ -42,15 +45,19 @@ aggregate_benchmark <- function(name, iterations, task) {
     }
   })
 
-  times[[name]] <<- aggregate_time
+  times[[name]] <<- list(time=aggregate_time, parallelism=NA)
 }
 
 benchmark_end <- function() {
-  df <- do.call(rbind, unname(lapply(times, function(proc_time) {
+  df <- do.call(rbind, unname(lapply(times, function(list) {
+    proc_time <- list[[1]]
+    parallelism <- as.integer(list[[2]])
     pt <- summary(proc_time)
-    data.frame(user = pt[[1]], system = pt[[2]], elapsed = pt[[3]])
+    data.frame(user = pt[[1]], system = pt[[2]], elapsed = pt[[3]], parallelism = parallelism)
   })))
-  df <- cbind(data.frame(task = names(times), stringsAsFactors = FALSE), df)
+
+  # strip off the added parallelism in the name when creating the final data frame
+  df <- cbind(data.frame(task = str_replace(names(times), "(.*)\\(([\\d])\\)$", "\\1"), stringsAsFactors = FALSE), df)
   df <- tibble::as_tibble(df)
 
   results_filename <- Sys.getenv("OUTPUT_FILE", "")

@@ -1,10 +1,16 @@
 library(ggplot2)
 library(stringr)
 
+save_plot <- function(plot, filename) {
+  ggsave(filename, plot=plot)
+  cat("Plot saved to ", filename)
+}
+
 # Compare multiple benchmark runs, generating graphs for each unique filesystem
 # Multiple runs for the same filesystem are averaged together
 
-args = commandArgs(trailingOnly = TRUE)
+#args = commandArgs(trailingOnly = TRUE)
+args = c("ssd=*ssd.csv", "efs=*efs.csv")
 
 if (length(args) == 0) {
   msg <- "No arguments specified.
@@ -36,11 +42,11 @@ for (filesystem_name in attributes(files_to_read)[[1]]) {
   files <- files_to_read[[filesystem_name]]
 
   # combine each of the runs for this particular filesystem
-  aggregate_data_frame <- data.frame(matrix(ncol = 4))
-  colnames(aggregate_data_frame) <- c("task", "user", "system", "elapsed")
+  aggregate_data_frame <- data.frame(matrix(ncol = 5))
+  colnames(aggregate_data_frame) <- c("task", "user", "system", "elapsed", "parallelism")
   for (file in files) {
     data_frame <- read.csv(file)
-    aggregate_data_frame <- merge(data_frame, aggregate_data_frame, all.x = TRUE, by.x = "task", by.y = "task")
+    aggregate_data_frame <- merge(data_frame, aggregate_data_frame, all.x = TRUE, by.x = c("task", "parallelism"), by.y = c("task", "parallelism"))
   }
 
   # average each of the elapsed columns together
@@ -53,7 +59,6 @@ for (filesystem_name in attributes(files_to_read)[[1]]) {
 
   data_frame_subset <- aggregate_data_frame[, col_names]
   aggregate_data_frame["average"] = rowMeans(data_frame_subset, na.rm = TRUE)
-
   results[[filesystem_name]] = aggregate_data_frame
 }
 
@@ -61,49 +66,52 @@ for (filesystem_name in attributes(files_to_read)[[1]]) {
 final_data_frame <- data.frame()
 num_fs <- length(attributes(results)[[1]])
 final_data_frame <- results[[1]]
-final_data_frame <- final_data_frame[,c("task", "average")]
-colnames(final_data_frame)[2] <- sprintf("%s", attributes(results)[[1]][1])
+final_data_frame <- final_data_frame[,c("task", "parallelism", "average")]
+colnames(final_data_frame)[3] <- sprintf("%s", attributes(results)[[1]][1])
 
 if (num_fs > 1) {
   for (i in 2:num_fs) {
     filesystem_name <- attributes(results)[[1]][i]
 
     df <- results[[filesystem_name]]
-    sub_df <- df[,c("task", "average")]
-    colnames(sub_df)[2] <- sprintf("%s", filesystem_name)
+    sub_df <- df[,c("task", "parallelism", "average")]
+    colnames(sub_df)[3] <- sprintf("%s", filesystem_name)
 
-    final_data_frame <- merge(final_data_frame, sub_df, all.x = TRUE, by.x = "task", by.y = "task")
+    final_data_frame <- merge(final_data_frame, sub_df, all.x = TRUE, by.x = c("task", "parallelism"), by.y = c("task", "parallelism"))
   }
 }
 
 observations <- c()
 groupings <- c()
+parallelisms <- c()
 filesystems <- c()
-for (i in 2:ncol(final_data_frame)) {
-  observations <- append(observations, final_data_frame[[i]])
+for (i in 3:ncol(final_data_frame)) {
   groupings <- append(groupings, final_data_frame[[1]])
-  groupings <- sapply(groupings, function(val) {
-    # make the titles shorter width wise by inserting newlines every X characters
-    val <- paste(strwrap(val, width = 30), collapse="\n")
-  })
+  parallelisms <- append(parallelisms, final_data_frame[[2]])
+  observations <- append(observations, final_data_frame[[i]])
   filesystems <- append(filesystems, rep(colnames(final_data_frame)[i], nrow(final_data_frame)))
 }
 
 final_data_frame <- data.frame(observation = observations,
                                grouping = groupings,
-                               filesystem = filesystems)
+                               filesystem = filesystems,
+                               parallelism = parallelisms)
 
-plot <- ggplot(data=final_data_frame, aes(filesystem, observation, fill=filesystem)) +
+# break the data frame into two for separate plots - one for synchronous tests and one for parallel
+sync_data_frame <- subset(final_data_frame, parallelism %in% c(NA))
+parallel_data_frame <- final_data_frame[!(final_data_frame$observation %in% sync_data_frame$observation),]
+
+sync_plot <- ggplot(data=sync_data_frame, aes(filesystem, observation, fill=filesystem)) +
   geom_bar(stat="identity") +
   labs(x="", y="Seconds") +
-  theme(axis.text.x=element_blank(), strip.text.x = element_text(size = 7)) +
+  theme(strip.text.x = element_text(size = 7)) +
   facet_wrap(grouping ~ ., scales="free")
 
-plot_filename <- Sys.getenv("PLOT_FILE", "")
-if (!nzchar(plot_filename)) {
-  plot_filename <- "plot-results.png"
-  message("No PLOT_FILE env var; writing plot results to ", plot_filename)
-}
+parallel_plot <- ggplot(data=parallel_data_frame, aes(as.factor(parallelism), observation, fill=filesystem)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(x="Concurrency", y="Seconds") +
+  theme(strip.text.x = element_text(size = 7)) +
+  facet_wrap(grouping ~ ., scales="free")
 
-ggsave(plot_filename, plot=plot)
-cat("Plot saved to ", plot_filename)
+save_plot(sync_plot, "synchronous-plot-results.png")
+save_plot(parallel_plot, "parallel-plot-results.png")
