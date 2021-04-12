@@ -61,7 +61,7 @@ final_data_frame$grouping <- vapply(final_data_frame$grouping, paste, character(
 # Again, need to use factor() to prevent ggplot2 from reordering
 final_data_frame$grouping <- factor(final_data_frame$grouping, unique(final_data_frame$grouping))
 
-# break the data frame into two for separate plots - one for synchronous tests and one for parallel
+# break the data frame into two for separate plots - one for serial tests and one for parallel
 sync_data_frame <- subset(final_data_frame, parallelism %in% c(1))
 parallel_data_frame <- final_data_frame[!(final_data_frame$observation %in% sync_data_frame$observation),]
 
@@ -77,5 +77,5 @@ parallel_plot <- ggplot(data=parallel_data_frame, aes(as.factor(parallelism), ob
   theme(strip.text.x = element_text(size = 7)) +
   facet_wrap(grouping ~ ., scales="free")
 
-save_plot(sync_plot, "synchronous-plot-results.png")
+save_plot(sync_plot, "serial-plot-results.png")
 save_plot(parallel_plot, "parallel-plot-results.png")
