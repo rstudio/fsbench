@@ -37,7 +37,7 @@ final_data_frame <- do.call(rbind, mapply(names(files_to_read), files_to_read, F
   data_frame_all <- do.call(rbind, data_frames)
   # Fix-up NAs for parallelism - set them to 1 as parallel tests never have a parallelization factor of 1
   # This makes sure that all of the aggregation functions work correctly
-  data_frame_all$parallelism <- sapply(data_frame_all$parallelism, function(val){if (is.na(val)){ val <- 1};val})
+  data_frame_all$parallelism <- ifelse(is.na(data_frame_all$parallelism), 1, data_frame_all$parallelism)
   # This factor() call is necessary to prevent aggregate() from reordering
   # by task, alphabetically
   data_frame_all$task <- factor(data_frame_all$task, unique(data_frame_all$task))
