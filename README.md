@@ -22,7 +22,7 @@ make
 
 This will run for several minutes and then dump some timing information to the screen.
 
-## Configuring
+### Run Configuration
 
 Two environment variables can be used to configure fsbench:
 
@@ -30,3 +30,23 @@ Two environment variables can be used to configure fsbench:
 
 * `OUTPUT_FILE` defaults to `./results-<date>-<time>.csv` and indicates the path where the benchmark results should be recorded, as CSV data. (The same results are always printed to the screen, in tabular form.)
 
+## Comparing results
+
+Once you have one or more results files from running the benchmarks, you can use the comparison tool to compare multiple runs across several filesystems. The comparison tool will average multiple runs for each distinct filesystem tested, and produce bar charts to compare performance between the different filesystems.
+
+To run the comparison tool:
+
+```
+Rscript compare.R <filesystem name>=<results file glob> ...
+```
+
+For example, to compare several runs against an SSD to several runs against an EFS volume:
+
+```
+Rscript compare.R ssd=*ssd.csv efs=*efs.csv
+```
+
+This will cause all `*ssd.csv` files containing `ssd` results to be loaded and averaged together and graphed against all of the (averaged) `efs` runs within the `*efs.csv` files. After the comparison has run, two image files will be generated:
+
+* `serial-plot-results.png` shows all of the serial tests that have no parallelization, one plot for each test benchmark
+* `parallel-plot-results.png` shows all of the parallel tests, one plot for each test benchmark
