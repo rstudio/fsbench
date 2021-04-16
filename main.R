@@ -39,24 +39,24 @@ unlink(target("1gb.csv"))
 # Parallel tests with 1GB readers/writers =======================================================================
 for (i in 1:4) {
   num_writers <- 2^i
-  benchmark(sprintf("Parallel DD write, 1GB * %d simultaneous writers", num_writers), system.time({
+  benchmark("DD write, 1GB", system.time({
     mclapply(1:num_writers, function(id) {
       file <- target(sprintf("parallel_%d.dat", id))
       command <- sprintf("dd if=/dev/zero of=%s bs=1048576 count=1024 conv=sync oflag=nocache", file)
       system(command)
     }, mc.preschedule = FALSE, mc.cores = num_writers)
-  }))
+  }), parallelism = num_writers)
 }
 
 for (i in 1:4) {
   num_readers <- 2^i
-  benchmark(sprintf("Parallel DD read, 1GB * %d simultaneous readers", num_readers), system.time({
+  benchmark("DD read, 1GB", system.time({
     mclapply(1:num_readers, function(id) {
       file <- target(sprintf("parallel_%d.dat", id))
       command <- sprintf("dd if=%s of=/dev/null bs=1048576 count=1024 iflag=nocache", file)
       system(command)
     }, mc.preschedule = FALSE, mc.cores = num_readers)
-  }))
+  }), parallelism = num_readers)
 }
 
 unlink(target("parallel_*.dat"))
@@ -84,7 +84,7 @@ for (i in 1:4) {
 # Parallel small file tests =====================================================================================
 for (i in 1:4) {
   num_writers <- 2^i
-  benchmark(sprintf("Parallel DD write, 10MB over 1000 files * %d simultaneous writers", num_writers), system.time({
+  benchmark("DD write, 10MB over 1000 files", system.time({
     mclapply(1:num_writers, function(id) {
       for (j in 1:1000) {
         file <- target(sprintf("small-parallel_%d_%d.dat", id, j))
@@ -92,12 +92,12 @@ for (i in 1:4) {
         system(command, ignore.stdout = TRUE, ignore.stderr = TRUE)
       }
     }, mc.preschedule = FALSE, mc.cores = num_writers)
-  }))
+  }), parallelism = num_writers)
 }
 
 for (i in 1:4) {
   num_readers <- 2^i
-  benchmark(sprintf("Parallel DD read, 10MB over 1000 files * %d simultaneous readers", num_readers), system.time({
+  benchmark("DD read, 10MB over 1000 files", system.time({
     mclapply(1:num_readers, function(id) {
       for (j in 1:1000) {
         file <- target(sprintf("small-parallel_%d_%d.dat", id, j))
@@ -105,7 +105,7 @@ for (i in 1:4) {
         system(command, ignore.stdout = TRUE, ignore.stderr = TRUE)
       }
     }, mc.preschedule = FALSE, mc.cores = num_readers)
-  }))
+  }), parallelism = num_readers)
 }
 
 unlink(target("small-parallel_*.dat"))
