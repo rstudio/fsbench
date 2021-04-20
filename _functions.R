@@ -57,7 +57,7 @@ benchmark_end <- function() {
   })))
 
   # strip off the added parallelism in the name when creating the final data frame
-  df <- cbind(data.frame(task = sub("(.*)\\(([\\d])\\)$", "\\1", names(times), perl=TRUE), stringsAsFactors = FALSE), df)
+  df <- cbind(data.frame(task = sub("(.*)\\(([\\d]+)\\)$", "\\1", names(times), perl=TRUE), stringsAsFactors = FALSE), df)
   df <- tibble::as_tibble(df)
 
   results_filename <- Sys.getenv("OUTPUT_FILE", "")
