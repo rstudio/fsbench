@@ -27,7 +27,7 @@ arg_matrix <- do.call(rbind, parsed_args)
 files_to_read <- setNames(lapply(arg_matrix[,3], Sys.glob), arg_matrix[,2])
 bad_glob <- which(vapply(files_to_read, length, integer(1)) == 0)
 if (length(bad_glob) > 0) {
-  stop(sprintf("No files found for glob argument '%s'", files_to_read[[bad_glob[1]]]))
+  stop(sprintf("No files found for glob argument '%s'", names(files_to_read[bad_glob[1]])))
 }
 
 final_data_frame <- do.call(rbind, mapply(names(files_to_read), files_to_read, FUN = function(fs, files) {
@@ -55,7 +55,7 @@ final_data_frame <- do.call(rbind, mapply(names(files_to_read), files_to_read, F
 
 # Rewrap group; this results in a list, each element of which is a character
 # vector of length >= 1
-final_data_frame$grouping <- lapply(final_data_frame$grouping, strwrap, width = 30)
+final_data_frame$grouping <- lapply(final_data_frame$grouping, strwrap, width = 20)
 # Join each character vector's elements, using \n
 final_data_frame$grouping <- vapply(final_data_frame$grouping, paste, character(1), collapse = "\n")
 # Again, need to use factor() to prevent ggplot2 from reordering
@@ -68,13 +68,13 @@ parallel_data_frame <- final_data_frame[!(final_data_frame$observation %in% sync
 sync_plot <- ggplot(data=sync_data_frame, aes(filesystem, observation, fill=filesystem)) +
   geom_bar(stat="identity") +
   labs(x="", y="Seconds") +
-  theme(strip.text.x = element_text(size = 7)) +
+  theme(strip.text.x = element_text(size = 5), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
   facet_wrap(grouping ~ ., scales="free")
 
 parallel_plot <- ggplot(data=parallel_data_frame, aes(as.factor(parallelism), observation, fill=filesystem)) +
   geom_bar(stat="identity", position=position_dodge()) +
   labs(x="Concurrency", y="Seconds") +
-  theme(strip.text.x = element_text(size = 7)) +
+  theme(strip.text.x = element_text(size = 5)) +
   facet_wrap(grouping ~ ., scales="free")
 
 save_plot(sync_plot, "serial-plot-results.png")
