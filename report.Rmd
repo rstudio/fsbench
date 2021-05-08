@@ -1,0 +1,105 @@
+---
+title: "fsbench report"
+output:
+  html_document:
+    css: report.css
+params:
+  EBS: examples/ebs.csv
+  EFS: examples/efs.csv
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3.5)
+
+source("_functions_compare.R")
+fsbench_report_init(params)
+```
+
+## Install packages
+
+```{r}
+df <- fsbench_take_results(c("Install MASS", "Install lattice", "Install BH"))
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+## Write CSV
+
+```{r}
+df <- fsbench_take_results(sprintf("Write CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+```{r}
+df <- fsbench_take_results(sprintf("Write CSV, 100MB over %s files", 10^(1:4)))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+## Read CSV
+
+```{r}
+df <- fsbench_take_results(sprintf("Read CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+```{r}
+df <- fsbench_take_results(sprintf("Read CSV, 100MB over %s files", 10^(1:4)))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+## FST reads
+
+```{r}
+df <- fsbench_take_results(sprintf("FST random reads, 100MB over %s*%s reads", 10^(1:4), c("10MB", "1MB", "100KB", "10KB")))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+## Realistic CSV reads
+
+```{r}
+df <- fsbench_take_results("Read 14 days of CRAN logs with fread")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+```{r}
+df <- fsbench_take_results("Sample 5000 rows from each of 14 CRAN logs with vroom")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+## Parallel sequential reads/writes, 1GB
+
+```{r}
+df <- fsbench_take_results("DD write, 1GB")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+```{r}
+df <- fsbench_take_results("DD read, 1GB")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+## Parallel sequential reads/writes, 10MB over 1000 files
+
+```{r}
+df <- fsbench_take_results("DD write, 10MB over 1000 files")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+```{r}
+df <- fsbench_take_results("DD read, 10MB over 1000 files")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+<!-- TODO: Display remaining results -->
