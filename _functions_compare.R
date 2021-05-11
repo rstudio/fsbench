@@ -1,6 +1,44 @@
-fsbench_results <- NULL
-fsbench_runs <- character(0)
-fsbench_tasks <- character(0)
+# Represents a set of fsbench results, incorporating multiple runs and tasks
+FSBenchResults <- R6::R6Class("FSBenchResults",
+  private = list(
+    results = "data.frame",
+    runs = factor(),
+    tasks = factor()
+  ),
+  public = list(
+    initialize = function(results, runs) {
+      private$results <- results
+      private$runs <- runs
+      private$tasks <- unique(results$task)
+    },
+    # Retrieve the results for the specified tasks, and prevents them from
+    # being returned from future calls to self$remaining()
+    take = function(tasks, run_names = NULL) {
+      df <- self$peek(tasks, run_names = run_names)
+      private$tasks <- setdiff(private$tasks, tasks)
+      df
+    },
+    # Like self$take(), but doesn't affect self$remaining()
+    peek = function(tasks, run_names = NULL) {
+      df <- private$results
+      df <- df[df$task %in% tasks,]
+      if (length(run_names) > 0) {
+        df <- df[df$run_name %in% run_names,]
+        unseen_run_names <- setdiff(run_names, df$run_name)
+        warning(
+          "Run name(s) requested but not found: ",
+          paste(unseen_run_names, collapse = ", ")
+        )
+      }
+      df
+    },
+    # Returns tasks that have not yet been returned by take()
+    remaining = function() {
+      df <- private$results
+      df[df$task %in% private$tasks,]
+    }
+  )
+)
 
 fsbench_report_init <- function(params) {
   files_to_read <- lapply(params, Sys.glob)
@@ -9,21 +47,15 @@ fsbench_report_init <- function(params) {
     stop(sprintf("Bad params value '%s': no files found that matched '%s'", names(params)[bad_glob[1]], params[bad_glob[1]]))
   }
 
-  fsbench_results <<- do.call(rbind,
+  results <- do.call(rbind,
     mapply(read_runs, names(params), files_to_read, SIMPLIFY = FALSE, USE.NAMES = FALSE)
   )
-  fsbench_runs <<- unique(names(params))
-  fsbench_tasks <<- unique(fsbench_results$task)
+  runs <- unique(names(params))
+
+  FSBenchResults$new(results, runs)
 }
 
-fsbench_take_results <- function(tasks) {
-  matches <- fsbench_results$task %in% tasks
-  fsbench_tasks <<- setdiff(fsbench_tasks, tasks)
-  df <- fsbench_results[matches,]
-  df
-}
-
-fsbench_plot <- function(df, scales = c("fixed", "free")) {
+fsbench_plot <- function(df, scales = c("fixed", "free"), ncol = length(unique(df$task)), nrow = 1) {
   scales <- match.arg(scales)
 
   p <- ggplot(df, aes(run_name, elapsed, fill = run_name))
@@ -38,8 +70,9 @@ fsbench_plot <- function(df, scales = c("fixed", "free")) {
   }
 
   p <- p +
-    facet_wrap(~ task, ncol = length(unique(df$task)), scales = scales) +
-    ylab("Elasped (seconds)")
+    facet_wrap(~ task, ncol = ncol, nrow = nrow, scales = scales) +
+    ylab("Elasped (seconds)") +
+    ylim(0, NA)
   p
 }
 

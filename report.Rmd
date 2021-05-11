@@ -10,16 +10,28 @@ params:
 
 ```{r setup, echo=FALSE}
 library(ggplot2)
-knitr::opts_chunk$set(echo = FALSE, fig.height = 3.5)
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3.5, fig.align = "center")
 
 source("_functions_compare.R")
-fsbench_report_init(params)
+results <- fsbench_report_init(params)
 ```
+
+All times are in seconds (lower is better).
 
 ## Install packages
 
+Installation of R packages is significantly affected by disk I/O, but still quite usable under EFS.
+
 ```{r}
-df <- fsbench_take_results(c("Install MASS", "Install lattice", "Install BH"))
+df <- results$take(c("Install MASS", "Install lattice"))
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+One notable outlier is BH, which is a worst-case scenario for distributed filesystems: it contains nearly 13,000 small files (C++ header files that comprise a significant subset of the [Boost](https://www.boost.org/) library). Installing BH on EFS is so much slower than usual that users commonly think the session has hung.
+
+```{r fig.width=3.5}
+df <- results$take(c("Install BH"))
 fsbench_plot(df)
 fsbench_table(df)
 ```
@@ -27,13 +39,18 @@ fsbench_table(df)
 ## Write CSV
 
 ```{r}
-df <- fsbench_take_results(sprintf("Write CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
-fsbench_plot(df, scales = "free")
-fsbench_table(df)
+# These tests are not that useful. Take them, but don't display them.
+df <- results$take(sprintf("Write CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
+# fsbench_plot(df, scales = "free")
+# fsbench_table(df)
 ```
 
+Each of the following tests writes 100MB of CSV data, distributed over different numbers of files. The greater the number of files, the smaller each individual CSV file is; for example, 100MB over 1,000 files results in each file being 100KB, while 100MB over 10,000 files results in each file being 10KB.
+
+The collective overhead of EFS increases as we write to greater numbers of smaller files.
+
 ```{r}
-df <- fsbench_take_results(sprintf("Write CSV, 100MB over %s files", 10^(1:4)))
+df <- results$take(sprintf("Write CSV, 100MB over %s files", 10^(1:4)))
 fsbench_plot(df, scales = "free")
 fsbench_table(df)
 ```
@@ -41,13 +58,13 @@ fsbench_table(df)
 ## Read CSV
 
 ```{r}
-df <- fsbench_take_results(sprintf("Read CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
+df <- results$take(sprintf("Read CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
 fsbench_plot(df, scales = "free")
 fsbench_table(df)
 ```
 
 ```{r}
-df <- fsbench_take_results(sprintf("Read CSV, 100MB over %s files", 10^(1:4)))
+df <- results$take(sprintf("Read CSV, 100MB over %s files", 10^(1:4)))
 fsbench_plot(df, scales = "free")
 fsbench_table(df)
 ```
@@ -55,21 +72,21 @@ fsbench_table(df)
 ## FST reads
 
 ```{r}
-df <- fsbench_take_results(sprintf("FST random reads, 100MB over %s*%s reads", 10^(1:4), c("10MB", "1MB", "100KB", "10KB")))
+df <- results$take(sprintf("FST random reads, 100MB over %s*%s reads", 10^(1:4), c("10MB", "1MB", "100KB", "10KB")))
 fsbench_plot(df, scales = "free")
 fsbench_table(df)
 ```
 
 ## Realistic CSV reads
 
-```{r}
-df <- fsbench_take_results("Read 14 days of CRAN logs with fread")
+```{r fig.width=3.5}
+df <- results$take("Read 14 days of CRAN logs with fread")
 fsbench_plot(df)
 fsbench_table(df)
 ```
 
-```{r}
-df <- fsbench_take_results("Sample 5000 rows from each of 14 CRAN logs with vroom")
+```{r fig.width=3.5}
+df <- results$take("Sample 5000 rows from each of 14 CRAN logs with vroom")
 fsbench_plot(df)
 fsbench_table(df)
 ```
@@ -77,13 +94,13 @@ fsbench_table(df)
 ## Parallel sequential reads/writes, 1GB
 
 ```{r}
-df <- fsbench_take_results("DD write, 1GB")
+df <- results$take("DD write, 1GB")
 fsbench_plot(df)
 fsbench_table(df)
 ```
 
 ```{r}
-df <- fsbench_take_results("DD read, 1GB")
+df <- results$take("DD read, 1GB")
 fsbench_plot(df)
 fsbench_table(df)
 ```
@@ -91,15 +108,20 @@ fsbench_table(df)
 ## Parallel sequential reads/writes, 10MB over 1000 files
 
 ```{r}
-df <- fsbench_take_results("DD write, 10MB over 1000 files")
+df <- results$take("DD write, 10MB over 1000 files")
 fsbench_plot(df)
 fsbench_table(df)
 ```
 
 ```{r}
-df <- fsbench_take_results("DD read, 10MB over 1000 files")
+df <- results$take("DD read, 10MB over 1000 files")
 fsbench_plot(df)
 fsbench_table(df)
 ```
 
-<!-- TODO: Display remaining results -->
+```{r}
+df <- results$remaining()
+if (nrow(df) > 0) {
+  warning("Unreported task(s) detected: ", paste(paste0("'", unique(df$task), "'"), collapse = ", "))
+}
+```
