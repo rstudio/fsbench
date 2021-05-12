@@ -63,10 +63,16 @@ fsbench_plot <- function(df, scales = c("fixed", "free"), ncol = length(unique(d
   if (all(df$parallelism == 1)) {
     p <- p + geom_bar(stat = "identity", show.legend = FALSE) +
       xlab("Configuration")
+
+    # If too many runs, turn the x-axis labels 90 degrees so they fit
+    if (length(unique(df$run_name)) > 5) {
+      p <- p + theme(axis.text.x = element_text(angle = 90))
+    }
   } else {
     p <- p + geom_line(aes(x = parallelism, group = run_name, color = run_name)) +
       geom_point(aes(x = parallelism, color = run_name)) +
-      xlab("Parallelism")
+      xlab("Parallelism") +
+      theme(legend.title = element_blank())
   }
 
   p <- p +
