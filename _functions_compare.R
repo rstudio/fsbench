@@ -58,6 +58,13 @@ fsbench_report_init <- function(params) {
 fsbench_plot <- function(df, scales = c("fixed", "free"), ncol = length(unique(df$task)), nrow = 1) {
   scales <- match.arg(scales)
 
+  df$task <- local({
+    task <- lapply(df$task, strwrap, width = 20)
+    # Join each character vector's elements, using \n
+    task <- vapply(task, paste, character(1), collapse = "\n")
+    factor(task, levels = unique(task))
+  })
+
   p <- ggplot(df, aes(run_name, elapsed, fill = run_name))
 
   if (all(df$parallelism == 1)) {
