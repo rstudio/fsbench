@@ -2,8 +2,6 @@
 
 A set of R-centric benchmarks that evaluate filesystem performance for a number of common tasks. Currently for Linux and macOS only.
 
-**Work in progress**
-
 ## Preparation
 
 ```
@@ -50,3 +48,7 @@ This will cause all `*ssd.csv` files containing `ssd` results to be loaded and a
 
 * `serial-plot-results.png` shows all of the serial tests that have no parallelization, one plot for each test benchmark
 * `parallel-plot-results.png` shows all of the parallel tests, one plot for each test benchmark
+
+## License
+
+fsbench is public domain ([CC0](https://creativecommons.org/publicdomain/zero/1.0/)).
