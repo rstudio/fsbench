@@ -1,0 +1,148 @@
+---
+title: "fsbench report"
+output:
+  html_document:
+    css: report.css
+params:
+  EBS: ../aws-fsbench/results/kevin7/ebs/*.csv
+  EFS: ../aws-fsbench/results/kevin7/efs_multi/*.csv
+  EFS1: ../aws-fsbench/results/kevin7/efs_one/*.csv
+  NFS: ../aws-fsbench/results/kevin7/nfs/*.csv
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3.5, fig.align = "center")
+
+source("_functions_compare.R")
+results <- fsbench_report_init(params)
+```
+
+All times are in seconds (lower is better).
+
+Note that the "EFS" flavor is EFS in Multiple Availability Zone mode, and "EFS1" is EFS in Single Availability Zone mode.
+
+## Install packages
+
+Installation of R packages is significantly affected by disk I/O, but still quite usable under EFS.
+
+```{r}
+df <- results$take(c("Install MASS", "Install lattice"))
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+One notable outlier is BH, which is a worst-case scenario for distributed filesystems: it contains nearly 13,000 small files (C++ header files that comprise a significant subset of the [Boost](https://www.boost.org/) library). Installing BH on EFS is so much slower than usual that users commonly think the session has hung.
+
+```{r fig.width=3.5}
+df <- results$take(c("Install BH"))
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+## Write CSV
+
+```{r}
+# These tests are not that useful. Take them, but don't display them.
+df <- results$take(sprintf("Write CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
+# fsbench_plot(df, scales = "free")
+# fsbench_table(df)
+```
+
+Each of the following tests writes 100MB of CSV data, distributed over different numbers of files. The greater the number of files, the smaller each individual CSV file is; for example, 100MB over 1,000 files results in each file being 100KB, while 100MB over 10,000 files results in each file being 10KB.
+
+The collective overhead of EFS increases as we write to greater numbers of smaller files.
+
+```{r}
+df <- results$take(sprintf("Write CSV, 100MB over %s files", 10^(1:4)))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+## Read CSV
+
+Reading small files from EFS is slower than from EBS/NFS, but the difference is of a smaller magnitude than writing.
+
+```{r}
+# These tests are not that useful. Take them, but don't display them.
+df <- results$take(sprintf("Read CSV, %s", c("10KB", "1MB", "100MB", "1GB")))
+# fsbench_plot(df, scales = "free")
+# fsbench_table(df)
+```
+
+```{r}
+df <- results$take(sprintf("Read CSV, 100MB over %s files", 10^(1:4)))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+## FST reads
+
+FST read results are similar to CSV reads, despite ostensibly performing random reads instead of sequential. This may be because of aggressive prefetching due to Amazon's recommended NFS client configuration values.
+
+```{r}
+df <- results$take(sprintf("FST random reads, 100MB over %s*%s reads", 10^(1:4), c("10MB", "1MB", "100KB", "10KB")))
+fsbench_plot(df, scales = "free")
+fsbench_table(df)
+```
+
+## Realistic CSV reads
+
+This test reads real CRAN daily download log files, each about 60MB.
+
+```{r fig.width=3.5}
+df <- results$take("Read 14 days of CRAN logs with fread")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+```{r fig.width=3.5}
+df <- results$take("Sample 5000 rows from each of 14 CRAN logs with vroom")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+## Parallel 1GB reads/writes
+
+This measures using `dd` to write 1GB using 2, 4, 8, and 16 worker processes, all on a single node. Note that *each* worker writes 1GB; as the number of works increases, so does the total amount of data being written.
+
+EFS and EFS1 are actually quite a bit *faster* than EBS and NFS. EBS and NFS have suspiciously identical timings, as do EFS and EFS1. More investigation may be warranted here.
+
+```{r}
+df <- results$take("DD write, 1GB")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+EFS and EFS1 are massively faster than EBS and NFS for reads. Again, EFS and EFS1 have suspiciously close timings.
+
+```{r}
+df <- results$take("DD read, 1GB")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+## Parallel 10KB reads/writes
+
+Similar to the previous "Parallel 1GB reads/writes", but this time, with each worker reading 1000 x 10KB files. The results are very different, with EBS the clear winner and EFS the clear loser.
+
+```{r}
+df <- results$take("DD write, 10MB over 1000 files")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+Read performance is much closer though, with all four filesystems performing quite similarly.
+
+```{r}
+df <- results$take("DD read, 10MB over 1000 files")
+fsbench_plot(df)
+fsbench_table(df)
+```
+
+```{r}
+df <- results$remaining()
+if (nrow(df) > 0) {
+  warning("Unreported task(s) detected: ", paste(paste0("'", unique(df$task), "'"), collapse = ", "))
+}
+```

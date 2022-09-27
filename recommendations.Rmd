@@ -1,0 +1,192 @@
+---
+title: "EFS recommendations (DRAFT)"
+output:
+  html_document:
+    css: report.css
+---
+
+```{r setup, echo=FALSE}
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, fig.height = 3.5, fig.align = "center")
+
+source("_functions_compare.R")
+
+show_results <- function(tasks, ..., scales = "fixed") {
+  results <- fsbench_report_init(rlang::list2(...))
+  df <- results$peek(tasks)
+  knitr::knit_print(fsbench_plot(df, scales = scales))
+  knitr::knit_print(fsbench_table(df))
+}
+
+task_write_latency <- "Write CSV, 100MB over 1000 files"
+task_read_latency <- "Read CSV, 100MB over 1000 files"
+task_latency <- c(task_write_latency, task_read_latency)
+task_parallel_read <- c("DD read, 1GB", "DD read, 10MB over 1000 files")
+task_parallel_write <- c("DD write, 1GB", "DD write, 10MB over 1000 files")
+task_parallel_thru <- c("DD read, 1GB", "DD write, 1GB")
+task_parallel_latency <- c("DD read, 10MB over 1000 files", "DD write, 10MB over 1000 files")
+```
+
+With much of EFS performance being based on various usage patterns, this document should serve as a starting point. Be aware that tuning EFS will be a requirement after monitoring customer behavior and likely require monitoring for maintaining long-term performance.
+
+See the <https://app.tettra.co/teams/rstudio/pages/efs-research-fsbench#header-fav4i-results> page for test methods and results.
+
+In the results below, all times are in seconds (lower is better).
+
+## Max I/O vs. GeneralPurpose
+
+**Summary: Use GeneralPurpose**
+
+When creating a filesystem you must choose a performance mode which cannot be altered. We strongly recommend using GeneralPurpose.
+
+[AWS recommends](https://docs.aws.amazon.com/efs/latest/ug/performance.html):
+
+> File systems in the Max I/O mode can scale to higher levels of aggregate throughput and operations per second. This scaling is done with a tradeoff of slightly higher latencies for file metadata operations. Highly parallelized applications and workloads, such as big data analysis, media processing, and genomic analysis, can benefit from this mode.
+
+In our testing maxIO is dramatically worse because of the increased latency - especially in the "many small files" scenario.
+
+```{r}
+show_results(task_latency, scales = "free",
+  "General Purpose" = "../aws-fsbench/results/modes1/efs*/*.csv",
+  "MaxIO" = "../aws-fsbench/results/modes2/efs*/*.csv",
+)
+```
+
+## Bursting vs. Provisioned Throughput
+
+**Summary: Similar performance under normal conditions, but Provisioned lets you pay extra to avoid surprises**
+
+The default bursting behavior is likely how we will want customers to start using EFS. The reason behind this is because we have no way of predicting how much throughput they will need. The customers will need to monitor their Burst Credit balance and permitted throughput [via CloudWatch](https://docs.aws.amazon.com/efs/latest/ug/efs-metrics.html) to ensure that they are not surprised by throttling if they run out. We highly recommend setting alarms based on these metrics.
+
+Throttling is remedied by either generating more Burst Credits (writing files to the filesystem or waiting for the Burst Credits to refresh) or converting to Provisioned Throughput mode. Large filesystems (\> 1TB) should be able to theoretically burst for 50% of the time. For smaller filesystems, Provisioned Throughput can be set to maintain a constant performance level.
+
+Note that generating large files to bump into a larger tier of burst performance is both time consuming and expensive. Weigh these options carefully. Creating \> 1TB of data could cost hundreds of dollars just to store the initial data.
+
+If migrating to EFS, Provisioned Throughput can help save time if you wish to move a lot of data. In our tests, moving from Bursting to 500MiB Provisioned improved speed by 5x and preserved Burst Credits.
+
+In most of our testing for Multi AZ EFS, bursting performs better than provisioned. For One Zone, the difference appeared to be minimal.
+
+```{r}
+runs <- list(
+  "Bursting" = "../aws-fsbench/results/types4/efs*/*.csv",
+  "Provisioned" = "../aws-fsbench/results/types3/efs*/*.csv"
+)
+
+show_results(c("Read CSV, 100MB", "Read 14 days of CRAN logs with fread"), scales = "free", !!!runs)
+show_results(task_parallel_latency, scales = "free", !!!runs)
+show_results(task_parallel_thru, scales = "free", !!!runs)
+```
+
+## Multi AZ vs One Zone
+
+**Summary: One Zone is significantly faster (and cheaper), Multi AZ has higher availability**
+
+AWS [currently supports](https://aws.amazon.com/efs/sla/) 99.99% uptime for Multi AZ and 99.9% for One Zone.
+
+Most of our customers who want fail over will prefer using a Multi AZ filesystem. However, there are major performance gains if they are willing to tolerate using a single availability zone. The One Zone filesystem is still durable, however if that availability zone goes down, there is no failover. This might be a great candidate for fast development environments.
+
+One Zone has performance that might be imperceptible compared to NFS.
+
+Read more about [storage classes here](https://docs.aws.amazon.com/efs/latest/ug/storage-classes.html).
+
+```{r}
+show_results(task_latency, scales = "free",
+  "One Zone" = "../aws-fsbench/results/*/efs_one/*.csv",
+  "Multi AZ" = "../aws-fsbench/results/*/efs_multi/*.csv",
+)
+```
+
+## Instance Types
+
+In general for EFS, [AWS recommends](https://docs.aws.amazon.com/efs/latest/ug/performance-tips.html) preferring instance types with more CPU or memory depending on the workload. Prefer memory-optimized or compute-optimized over general purpose instance types.
+
+For fsbench workloads, we have observed performance gains by using memory-optimized instance types, e.g. r5. For UI-related tasks like "Install BH" this could provide a nicer user experience.
+
+For servers which utilize many NFS client connections (e.g. Launcher) the enhanced networking might prove to be noticeably better. Consider using the "n" variants, e.g. r5n.
+
+```{r}
+show_results(c(task_latency, "Install BH"), scales = "free",
+  t3.large = "../aws-fsbench/results/types*/efs_t3.large/*.csv",
+  i3.large = "../aws-fsbench/results/types*/efs_i3en.large/*.csv",
+  i3en.large = "../aws-fsbench/results/types*/efs_i3en.large/*.csv",
+  c5.xlarge = "../aws-fsbench/results/types*/efs_c5.xlarge/*.csv",
+  c5n.xlarge = "../aws-fsbench/results/types*/efs_c5n.xlarge/*.csv",
+  m5.large = "../aws-fsbench/results/types*/efs_m5.large/*.csv",
+  m5n.large = "../aws-fsbench/results/types*/efs_m5n.large/*.csv",
+  r5.large = "../aws-fsbench/results/types*/efs_r5.large/*.csv",
+  r5n.large = "../aws-fsbench/results/types*/efs_r5n.large/*.csv",
+)
+show_results(task_parallel_read, scales = "free",
+  t3.large = "../aws-fsbench/results/types*/efs_t3.large/*.csv",
+  i3.large = "../aws-fsbench/results/types*/efs_i3en.large/*.csv",
+  i3en.large = "../aws-fsbench/results/types*/efs_i3en.large/*.csv",
+  c5.xlarge = "../aws-fsbench/results/types*/efs_c5.xlarge/*.csv",
+  c5n.xlarge = "../aws-fsbench/results/types*/efs_c5n.xlarge/*.csv",
+  m5.large = "../aws-fsbench/results/types*/efs_m5.large/*.csv",
+  m5n.large = "../aws-fsbench/results/types*/efs_m5n.large/*.csv",
+  r5.large = "../aws-fsbench/results/types*/efs_r5.large/*.csv",
+  r5n.large = "../aws-fsbench/results/types*/efs_r5n.large/*.csv",
+)
+```
+
+## Instance sizes
+
+We have observed significant gains in going from large to xlarge instance sizes - primarily in parallelized load. For servers with many users, increasing the instance size is recommended. Do not attempt to use smaller instance types e.g. c5.large with 4GB memory.
+
+```{r}
+show_results(task_latency, scales = "free",
+  t3.large = "../aws-fsbench/results/types3/efs_t3.large/*.csv",
+  t3.xlarge = "../aws-fsbench/results/types3/efs_t3.xlarge/*.csv",
+)
+
+show_results(task_parallel_read, scales = "free",
+  t3.large = "../aws-fsbench/results/types3/efs_t3.large/*.csv",
+  t3.xlarge = "../aws-fsbench/results/types3/efs_t3.xlarge/*.csv",
+)
+```
+
+## read_ahead_kb vs. default
+
+Linux kernels (5.4.\*) use a read_ahead_kb of 128, however the AWS docs recommend 15000. The [efs-utils](https://docs.aws.amazon.com/efs/latest/ug/installing-amazon-efs-utils.html) package will set this correctly, but for customers who wish to use only standard NFS utilities will need to [do this manually](https://docs.aws.amazon.com/efs/latest/ug/performance-tips.html#efs-perf-optimize-nfs-read-ahead).
+
+```{r}
+show_results(task_latency, scales = "free",
+  "Without efs-utils" = "../aws-fsbench/results/types2/efs_t3.large/*.csv",
+  "With efs-utils" = "../aws-fsbench/results/types3/efs_t3.large/*.csv",
+)
+
+show_results(task_parallel_write, scales = "free",
+  "Without efs-utils" = "../aws-fsbench/results/types2/efs_t3.large/*.csv",
+  "With efs-utils" = "../aws-fsbench/results/types3/efs_t3.large/*.csv",
+)
+```
+
+## Mounting considerations
+
+We strongly recommend using [efs-utils](https://docs.aws.amazon.com/efs/latest/ug/installing-amazon-efs-utils.html) to mount the EFS filesystem. If this is not feasible, standard NFS client connections are possible, but there are [mounting instructions](https://docs.aws.amazon.com/efs/latest/ug/mounting-fs.html) and [additional considerations](https://docs.aws.amazon.com/efs/latest/ug/mounting-fs-mount-cmd-general.html) to take into account.
+
+## Multiple Users
+
+When using an EFS filesystem for many users, we recommend splitting up the data between users as much as possible. For example, writing large files will block metadata operations in that directory until the write operation is complete. Try to keep the users isolated to separate directories whenever possible.
+
+## Special Considerations and Product Limitations
+
+Operations which consume many small files will not perform well in most EFS settings.
+
+We recommend pre-installing R packages so that users do not have to repeatedly install them.
+
+Prefer reading large files over splitting data between many small files.
+
+Project sharing using RSW (in its current state) will not work due to NFS ACLs [not being supported by EFS](https://docs.aws.amazon.com/efs/latest/ug/limits.html).
+
+For RSW, the default lock type of link-based won't work, the [advisory type must be used](https://docs.rstudio.com/ide/server-pro/latest/load-balancing.html#lock-configuration) instead.
+
+## Monitoring usage
+
+Please read about [available CloudWatch metrics](https://docs.aws.amazon.com/efs/latest/ug/monitoring-metric-math.html#metric-math-throughput-utilization) and creating customized metrics using [metric math for EFS](https://docs.aws.amazon.com/efs/latest/ug/monitoring-metric-math.html#metric-math-throughput-utilization).
+
+If using Bursting mode, be sure to monitor the BurstCreditBalancemetric. If this begins to decrease substantially over time, it will be time to consider adding data to bump the filesystem size into a [larger tier ](https://docs.aws.amazon.com/efs/latest/ug/performance.html)with more burst credits, or moving to Provisioned Throughput to establish a consistent baseline.
+
+If using Bursting mode, using [metric math](https://docs.aws.amazon.com/efs/latest/ug/monitoring-metric-math.html#metric-math-throughput-utilization), you can compare MeteredIOBytes to PermittedThroughput to know if you are using all of your available throughput. If this is the case, it might be an indication that you should move to Provisioned Throughput.
+
+If using Provisioned Throughput PermittedThroughput can be used to determine whether or not your storage volume has bumped you above your designated throughput setting.
