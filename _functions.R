@@ -55,11 +55,9 @@ benchmark_end <- function() {
     pt <- summary(proc_time)
     data.frame(user = pt[[1]], system = pt[[2]], elapsed = pt[[3]], parallelism = parallelism)
   })))
-
   # strip off the added parallelism in the name when creating the final data frame
   df <- cbind(data.frame(task = sub("(.*)\\(([\\d]+)\\)$", "\\1", names(times), perl=TRUE), stringsAsFactors = FALSE), df)
   df <- tibble::as_tibble(df)
-
   results_filename <- Sys.getenv("OUTPUT_FILE", "")
   if (!nzchar(results_filename)) {
     results_filename <- paste0("results-", format(Sys.time(), format = "%Y%m%d-%H%M%S"), ".csv")

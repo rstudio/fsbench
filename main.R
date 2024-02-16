@@ -182,6 +182,7 @@ benchmark("Sample 5000 rows from each of 14 CRAN logs with vroom", system.time({
     vroom_df <- vroom(file, progress = FALSE, col_types = "Dtdccccccd",
       col_names = c("date","time","size","r_version","r_arch","r_os","package","version","country","ip_id")
     )
+    message("main")
     sample(vroom_df$country, 5000)
   }
 }))
