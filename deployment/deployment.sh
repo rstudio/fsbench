@@ -43,6 +43,10 @@ ask_question() {
 default_directory="/opt"
 R_VERSION="4.3.2"
 
+# Get cloned repo location on disk
+current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+
 # Parse command line options
 while getopts ":d:r:" opt; do
   case ${opt} in
@@ -172,6 +176,10 @@ if [[ $choice == [Nn] ]]; then
     echoerr "Exiting script."
     exit 1
 fi
+
+#Change location to Makefile location too avoid relative path issues
+
+cd $current_dir/..
 
 make setup
 
