@@ -187,3 +187,39 @@ echo "Outputting log to directory ${OUTPUT_FILE}"
 
 make
 
+echo "fsbench has completed it's run on ${OUTPUT_FILE}"
+
+  # Prompt the user for yes/no input
+ask_question "Do you want to remove R ${R_VERSION}?"
+
+# Check if the choice is 'n', if so, exit the script
+if [[ $choice == [Nn] ]]; then
+    echo "Exiting script."
+    exit 1
+fi
+
+case $os in
+    RedHat)
+        case $redhat_version in
+            9)
+              sudo dnf remove -y R-${R_VERSION}-1-1.x86_64.rpm
+              ;;
+            8)
+              sudo yum remove -y R-${R_VERSION}-1-1.x86_64.rpm
+              ;;
+        esac
+        ;;
+    Ubuntu)
+        case $ubuntu_version in
+              22)
+              sudo apt remove r-${R_VERSION}
+              ;;
+              20)
+              sudo apt remove r-${R_VERSION}
+              ;;
+        esac
+
+esac
+
+
+
