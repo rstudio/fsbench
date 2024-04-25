@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 detect_os() {
     if [ -f /etc/redhat-release ]; then
         redhat_version=$(grep -oE '[0-9]+' /etc/redhat-release | head -1)
