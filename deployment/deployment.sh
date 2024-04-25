@@ -86,9 +86,6 @@ if [ ! -d "$directory" ]; then
     echoerr "Directory '$directory' created."
 fi
 
-cd $directory || exit
-
-
 
 # Continue with the script if choice is 'y' or anything else
 
@@ -158,8 +155,6 @@ export PATH=/opt/R/${R_VERSION}/bin/:$PATH
 
 echoerr "Verify R Installation"
 R --version
-
-cd fsbench/ || exit
 
 export TARGET_DIR=$directory
 
