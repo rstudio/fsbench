@@ -86,8 +86,6 @@ cd $directory || exit
 
 
 # Continue with the script if choice is 'y' or anything else
-echo "Continuing with the script..."
-# Add your script logic here
 
 if [ -f "/opt/R/${R_VERSION}/bin/R" ]; then
     echo "Selected version of R already installed at the expected path of /opt/R/${R_VERSION}/bin/R"
