@@ -100,7 +100,7 @@ case $os in
 
 esac
 
-export $PATH=/opt/R/${R_VERSION}/bin/
+export PATH=/opt/R/${R_VERSION}/bin/:$PATH
 
 R --version
 
