@@ -154,7 +154,7 @@ echo "Verify R Installation"
 R --version
 
 echo "Adding R/Rscript to path"
-export $PATH=/opt/R/${R_VERSION}/bin/
+export PATH=/opt/R/${R_VERSION}/bin/:$PATH
 
 cd fsbench/ || exit
 
