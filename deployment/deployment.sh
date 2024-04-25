@@ -156,8 +156,9 @@ export PATH=/opt/R/${R_VERSION}/bin/:$PATH
 echoerr "Verify R Installation"
 R --version
 
-echoerr "Set target directory to ${TARGET_DIR}"
+
 export TARGET_DIR=$directory
+echoerr "Set target directory to ${TARGET_DIR}"
 
 if [ -z "$OUTPUT_FILE" ]; then
     export OUTPUT_FILE="/opt"
