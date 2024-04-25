@@ -156,11 +156,13 @@ export PATH=/opt/R/${R_VERSION}/bin/:$PATH
 echoerr "Verify R Installation"
 R --version
 
+echoerr "Set target directory to ${TARGET_DIR}"
 export TARGET_DIR=$directory
 
 if [ -z "$OUTPUT_FILE" ]; then
     export OUTPUT_FILE="/opt"
 fi
+
 
 ask_question "Do you want to run the setup for fsbench?"
 
