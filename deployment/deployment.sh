@@ -2,6 +2,8 @@
 
 set -e
 
+echoerr() { echo "$@" 1>&2; }
+
 detect_os() {
     if [ -f /etc/redhat-release ]; then
         redhat_version=$(grep -oE '[0-9]+' /etc/redhat-release | head -1)
@@ -31,10 +33,11 @@ ask_question() {
     elif [[ "$choice_lower" == "n" ]]; then
         return 1  # Return failure (false)
     else
-        echo "Please enter either 'y' or 'n'."
+        echoerr "Please enter either 'y' or 'n'."
         ask_question "$question"  # Ask the question again
     fi
 }
+
 
 # Set the default directory name
 default_directory="/opt"
@@ -50,11 +53,11 @@ while getopts ":d:r:" opt; do
       R_VERSION=$OPTARG
       ;;
     \? )
-      echo "Usage: $(basename $0) [-d directory_name] [-r r_version]" >&2
+      echoerr "Usage: $(basename $0) [-d directory_name] [-r r_version]" >&2
       exit 1
       ;;
     : )
-      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      echoerr "Invalid option: $OPTARG requires an argument" 1>&2
       exit 1
       ;;
   esac
@@ -65,11 +68,11 @@ detect_os
 
 # If operating system not found or not in the specified list, exit
 if [ -z "$os" ]; then
-    echo "Operating system not supported."
+    echoerr "Operating system not supported."
     exit 1
 fi
 
-echo $os
+echoerr $os
 
 # If directory is not provided as argument, use the default directory
 if [ -z "$directory" ]; then
@@ -80,7 +83,7 @@ fi
 if [ ! -d "$directory" ]; then
     # Create the directory
     mkdir "$directory"
-    echo "Directory '$directory' created."
+    echoerr "Directory '$directory' created."
 fi
 
 cd $directory || exit
@@ -90,14 +93,14 @@ cd $directory || exit
 # Continue with the script if choice is 'y' or anything else
 
 if [ -f "/opt/R/${R_VERSION}/bin/R" ]; then
-    echo "Selected version of R already installed at the expected path of /opt/R/${R_VERSION}/bin/R"
+    echoerr "Selected version of R already installed at the expected path of /opt/R/${R_VERSION}/bin/R"
 else
     # Prompt the user for yes/no input
     read -p "R version not found at /opt/R/${R_VERSION}/bin/R. Do you want to install R ${R_VERSION}? (y/n): " choice
 
     # Check if the choice is 'n', if so, exit the script
     if [[ $choice == [Nn] ]]; then
-        echo "Exiting script."
+        echoerr "Exiting script."
         exit 1
     fi
     # Case statement to echo the combination of $os and $redhat_version if the OS is RedHat
@@ -150,10 +153,10 @@ else
     esac
 fi
 
-echo "Verify R Installation"
+echoerr "Verify R Installation"
 R --version
 
-echo "Adding R/Rscript to path"
+echoerr "Adding R/Rscript to path"
 export PATH=/opt/R/${R_VERSION}/bin/:$PATH
 
 cd fsbench/ || exit
@@ -168,7 +171,7 @@ ask_question "Do you want to run the setup for fsbench?"
 
 # Check if the choice is 'n', if so, exit the script
 if [[ $choice == [Nn] ]]; then
-    echo "Exiting script."
+    echoerr "Exiting script."
     exit 1
 fi
 
@@ -179,22 +182,22 @@ ask_question "Start fsbench run for storage mounted at ${directory}?"
 
 # Check if the choice is 'n', if so, exit the script
 if [[ $choice == [Nn] ]]; then
-    echo "Exiting script."
+    echoerr "Exiting script."
     exit 1
 fi
 
-echo "Outputting log to directory ${OUTPUT_FILE}"
+echoerr "Outputting log to directory ${OUTPUT_FILE}"
 
 make
 
-echo "fsbench has completed it's run on ${OUTPUT_FILE}"
+echoerr "fsbench has completed it's run on ${OUTPUT_FILE}"
 
   # Prompt the user for yes/no input
 ask_question "Do you want to remove R ${R_VERSION}?"
 
 # Check if the choice is 'n', if so, exit the script
 if [[ $choice == [Nn] ]]; then
-    echo "Exiting script."
+    echoerr "Exiting script."
     exit 1
 fi
 
