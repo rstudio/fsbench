@@ -17,6 +17,23 @@ detect_os() {
     fi
 }
 
+# Function to prompt the user for yes/no input
+ask_question() {
+    local question="$1"
+    read -p "$question (y/n): " choice
+    # Convert choice to lowercase for comparison
+    choice_lower=$(echo "$choice" | tr '[:upper:]' '[:lower:]')
+    # Check if the choice is valid
+    if [[ "$choice_lower" == "y" ]]; then
+        return 0  # Return success (true)
+    elif [[ "$choice_lower" == "n" ]]; then
+        return 1  # Return failure (false)
+    else
+        echo "Please enter either 'y' or 'n'."
+        ask_question "$question"  # Ask the question again
+    fi
+}
+
 # Set the default directory name
 default_directory="/opt"
 R_VERSION="4.3.2"
@@ -64,7 +81,7 @@ if [ ! -d "$directory" ]; then
     echo "Directory '$directory' created."
 fi
 
-cd $directory
+cd $directory || exit
 
 
 
@@ -89,13 +106,28 @@ else
             case $redhat_version in
                 9)
                   sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-                  sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
+                  # Prompt the user for yes/no input
+                  ask_question "Is this Linux instance running in a Public Cloud? (AWS, Azure, GCP, etc)"
+                  # Check if the choice is 'n', if so, exit the script
+                  if [[ $choice == [Nn] ]]; then
+                    sudo subscription-manager repos --enable codeready-builder-for-rhel-9-${arch}-rpms
+                  elif [[ $choice == [Yy] ]]; then
+                    sudo dnf install dnf-plugins-core
+                    sudo dnf config-manager --set-enabled codeready-builder-for-rhel-9-*-rpms
+                  fi
                   curl -O https://cdn.rstudio.com/r/rhel-9/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
                   sudo dnf install -y R-${R_VERSION}-1-1.x86_64.rpm
                   ;;
                 8)
                   sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-                  sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
+                  ask_question "Is this Linux instance running in a Public Cloud? (AWS, Azure, GCP, etc)"
+                  # Check if the choice is 'n', if so, exit the script
+                  if [[ $choice == [Nn] ]]; then
+                    sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
+                  elif [[ $choice == [Yy] ]]; then
+                    sudo dnf install dnf-plugins-core
+                    sudo dnf config-manager --set-enabled "codeready-builder-for-rhel-8-*-rpms"
+                  fi
                   curl -O https://cdn.rstudio.com/r/centos-8/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
                   sudo yum install -y R-${R_VERSION}-1-1.x86_64.rpm
                   ;;
@@ -124,7 +156,7 @@ R --version
 echo "Adding R/Rscript to path"
 export $PATH=/opt/R/${R_VERSION}/bin/
 
-cd fsbench/
+cd fsbench/ || exit
 
 export TARGET_DIR=$directory
 
@@ -132,8 +164,7 @@ if [ -z "$OUTPUT_FILE" ]; then
     export OUTPUT_FILE="/opt"
 fi
 
-  # Prompt the user for yes/no input
-read -p "Do you want to run the setup for fsbench? (y/n): " choice
+ask_question "Do you want to run the setup for fsbench?"
 
 # Check if the choice is 'n', if so, exit the script
 if [[ $choice == [Nn] ]]; then
@@ -144,7 +175,7 @@ fi
 make setup
 
   # Prompt the user for yes/no input
-read -p "Start fsbench run for storage mounted at ${directory} (y/n): " choice
+ask_question "Start fsbench run for storage mounted at ${directory}?"
 
 # Check if the choice is 'n', if so, exit the script
 if [[ $choice == [Nn] ]]; then
