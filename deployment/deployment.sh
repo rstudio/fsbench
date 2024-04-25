@@ -19,7 +19,7 @@ detect_os() {
 
 # Set the default directory name
 default_directory="/opt"
-r_version="4.3.2"
+R_VERSION="4.3.2"
 
 # Parse command line options
 while getopts ":d:r:" opt; do
@@ -42,6 +42,8 @@ while getopts ":d:r:" opt; do
 done
 shift $((OPTIND -1))
 
+detect_os
+
 # If operating system not found or not in the specified list, exit
 if [ -z "$os" ]; then
     echo "Operating system not supported."
@@ -60,17 +62,48 @@ if [ ! -d "$directory" ]; then
     # Create the directory
     mkdir "$directory"
     echo "Directory '$directory' created."
-else
-    echo "Directory '$directory' already exists."
 fi
 
 cd $directory
 
+# Case statement to echo the combination of $os and $redhat_version if the OS is RedHat
+case $os in
+    RedHat)
+        case $redhat_version in
+            9)
+              sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+              sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
+              curl -O https://cdn.rstudio.com/r/rhel-9/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
+              sudo dnf install R-${R_VERSION}-1-1.x86_64.rpm
+              ;;
+            8)
+              sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+              sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
+              curl -O https://cdn.rstudio.com/r/centos-8/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
+              sudo yum install R-${R_VERSION}-1-1.x86_64.rpm
+              ;;
+        esac
+        ;;
+    Ubuntu)
+        sudo apt-get update
+        sudo apt-get install gdebi-core
+        case $ubuntu_version in
+              22)
+              curl -O https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb
+              sudo gdebi r-${R_VERSION}_1_amd64.deb
+              ;;
+              20)
+              curl -O https://cdn.rstudio.com/r/ubuntu-2004/pkgs/r-${R_VERSION}_1_amd64.deb
+              sudo gdebi r-${R_VERSION}_1_amd64.deb
+              ;;
+        esac
 
+esac
 
-#curl -O https://cdn.rstudio.com/r/ubuntu-2204/pkgs/r-${R_VERSION}_1_amd64.deb
-#sudo gdebi -n r-${R_VERSION}_1_amd64.deb
-#R --version
+export $PATH=/opt/R/${R_VERSION}/bin/
+
+R --version
+
 #git clone https://github.com/rstudio/fsbench
 #cd fsbench/
 #make setup
