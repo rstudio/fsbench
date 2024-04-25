@@ -153,11 +153,11 @@ else
     esac
 fi
 
-echoerr "Verify R Installation"
-R --version
-
 echoerr "Adding R/Rscript to path"
 export PATH=/opt/R/${R_VERSION}/bin/:$PATH
+
+echoerr "Verify R Installation"
+R --version
 
 cd fsbench/ || exit
 
@@ -192,7 +192,7 @@ make
 
 echoerr "fsbench has completed it's run on ${OUTPUT_FILE}"
 
-  # Prompt the user for yes/no input
+# Prompt the user for yes/no input
 ask_question "Do you want to remove R ${R_VERSION}?"
 
 # Check if the choice is 'n', if so, exit the script
