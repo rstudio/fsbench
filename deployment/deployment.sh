@@ -156,6 +156,7 @@ fi
 
 echoerr "Adding R/Rscript to path"
 export PATH=/opt/R/${R_VERSION}/bin/:$PATH
+echoerr "Process PATH: ${PATH}"
 
 echoerr "Verify R Installation"
 R --version
