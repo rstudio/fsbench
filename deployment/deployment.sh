@@ -120,7 +120,7 @@ else
                     sudo dnf config-manager --set-enabled codeready-builder-for-rhel-9-*-rpms
                   fi
                   curl -O https://cdn.rstudio.com/r/rhel-9/pkgs/R-${R_VERSION}-1-1.x86_64.rpm
-                  dnf remove -y R-${R_VERSION}-1-1.x86_64.rpm
+                  dnf remove -y R-${R_VERSION}-1-1.x86_64
                   dnf install -y R-${R_VERSION}-1-1.x86_64.rpm
                   ;;
                 8)
@@ -213,10 +213,10 @@ case $os in
     RedHat)
         case $redhat_version in
             9)
-              sudo dnf remove -y R-${R_VERSION}-1-1.x86_64.rpm
+              sudo dnf remove -y R-${R_VERSION}-1-1.x86_64
               ;;
             8)
-              sudo yum remove -y R-${R_VERSION}-1-1.x86_64.rpm
+              sudo yum remove -y R-${R_VERSION}-1-1.x86_64
               ;;
         esac
         ;;
