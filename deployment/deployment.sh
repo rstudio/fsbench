@@ -183,6 +183,8 @@ fi
 
 cd $current_dir/..
 
+echoerr "${pwd}"
+
 make setup
 
   # Prompt the user for yes/no input
