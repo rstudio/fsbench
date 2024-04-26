@@ -170,6 +170,9 @@ if [ -z "$OUTPUT_FILE" ]; then
     export OUTPUT_FILE="/opt"
 fi
 
+#Change location to Makefile location too avoid relative path issues
+current_dir="$(dirname "$(readlink -f "$0")")"
+cd $current_dir/..
 
 ask_question "Do you want to run the setup for fsbench?"
 
@@ -179,11 +182,6 @@ if [[ $choice == [Nn] ]]; then
     exit 1
 fi
 
-#Change location to Makefile location too avoid relative path issues
-
-cd $current_dir/..
-
-echoerr "${pwd}"
 
 make setup
 
