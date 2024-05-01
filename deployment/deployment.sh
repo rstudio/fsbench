@@ -155,7 +155,7 @@ else
             esac
 
     esac
-    touch R-installed-by-script
+    touch $current_dir/R-installed-by-script
 fi
 
 echoerr "Adding R/Rscript to path"
@@ -204,7 +204,7 @@ echoerr "fsbench has completed it's run on ${OUTPUT_FILE}"
 
 if [ -f "${current_dir}/R-installed-by-script" ]; then
   # Prompt the user for yes/no input
-  ask_question "Do you want to remove R ${R_VERSION}?"
+  ask_question "R ${R_VERSION} was installed by this script, do you want to remove this version of R from the system?"
 
   # Check if the choice is 'n', if so, exit the script
   if [[ $choice == [Nn] ]]; then
