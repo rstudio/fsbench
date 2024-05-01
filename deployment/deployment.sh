@@ -44,7 +44,9 @@ default_directory="/opt"
 R_VERSION="4.4.0"
 
 # Get cloned repo location on disk
-current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+current_dir="$(dirname "$(readlink -f "$0")")"
+
+echoerr "Git repository cloned location is: $current_dir"
 
 
 # Parse command line options
@@ -153,6 +155,7 @@ else
             esac
 
     esac
+    touch R-installed-by-script
 fi
 
 echoerr "Adding R/Rscript to path"
@@ -200,37 +203,39 @@ make
 
 echoerr "fsbench has completed it's run on ${OUTPUT_FILE}"
 
-# Prompt the user for yes/no input
-ask_question "Do you want to remove R ${R_VERSION}?"
+if [ -f "${current_dir}/R-installed-by-script" ]; then
+  # Prompt the user for yes/no input
+  ask_question "Do you want to remove R ${R_VERSION}?"
 
-# Check if the choice is 'n', if so, exit the script
-if [[ $choice == [Nn] ]]; then
-    echoerr "Exiting script."
-    exit 1
+  # Check if the choice is 'n', if so, exit the script
+  if [[ $choice == [Nn] ]]; then
+      echoerr "Exiting script."
+      exit 1
+  fi
+
+  case $os in
+      RedHat)
+          case $redhat_version in
+              9)
+                sudo dnf remove -y R-${R_VERSION}-1-1.x86_64
+                ;;
+              8)
+                sudo yum remove -y R-${R_VERSION}-1-1.x86_64
+                ;;
+          esac
+          ;;
+      Ubuntu)
+          case $ubuntu_version in
+                22)
+                sudo apt remove r-${R_VERSION}
+                ;;
+                20)
+                sudo apt remove r-${R_VERSION}
+                ;;
+          esac
+
+  esac
 fi
-
-case $os in
-    RedHat)
-        case $redhat_version in
-            9)
-              sudo dnf remove -y R-${R_VERSION}-1-1.x86_64
-              ;;
-            8)
-              sudo yum remove -y R-${R_VERSION}-1-1.x86_64
-              ;;
-        esac
-        ;;
-    Ubuntu)
-        case $ubuntu_version in
-              22)
-              sudo apt remove r-${R_VERSION}
-              ;;
-              20)
-              sudo apt remove r-${R_VERSION}
-              ;;
-        esac
-
-esac
 
 
 
