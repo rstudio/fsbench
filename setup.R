@@ -1,3 +1,5 @@
+renv::restore(packages="renv")
+renv::load()
 renv::restore()
 
 source("_functions.R")
