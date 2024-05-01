@@ -41,7 +41,7 @@ ask_question() {
 
 # Set the default directory name
 default_directory="/opt"
-R_VERSION="4.3.2"
+R_VERSION="4.4.0"
 
 # Get cloned repo location on disk
 current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
