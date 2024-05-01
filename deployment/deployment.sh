@@ -46,7 +46,7 @@ R_VERSION="4.4.0"
 # Get cloned repo location on disk
 current_dir="$(dirname "$(readlink -f "$0")")"
 
-echoerr "Git repository cloned location is: $current_dir"
+echoerr "Deployment script running from: $current_dir/deployment.sh"
 
 
 # Parse command line options
@@ -174,7 +174,6 @@ if [ -z "$OUTPUT_FILE" ]; then
 fi
 
 #Change location to Makefile location too avoid relative path issues
-current_dir="$(dirname "$(readlink -f "$0")")"
 cd $current_dir/..
 
 ask_question "Do you want to run the setup for fsbench?"
