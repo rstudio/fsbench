@@ -234,6 +234,7 @@ if [ -f "${current_dir}/R-installed-by-script" ]; then
           esac
 
   esac
+  rm -f $current_dir/R-installed-by-script
 fi
 
 
