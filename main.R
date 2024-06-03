@@ -5,6 +5,15 @@ library(R.utils) # needed for fread to read .gz files
 library(vroom)
 
 source("_functions.R")
+short <- FALSE
+args <- commandArgs(trailingOnly = TRUE)
+short_test <- args[1]
+
+if short_test == "short" {
+short <- TRUE
+}
+
+print(param)
 
 benchmark_begin()
 
@@ -12,32 +21,46 @@ dir.create(target("lib"), recursive = TRUE, showWarnings = FALSE)
 
 # Install common R packages =====================================================================================
 benchmark("Install MASS", time_install("MASS", lib = target("lib")))
+if (!short) {
 benchmark("Install lattice", time_install("lattice", lib = target("lib")))
 benchmark("Install BH", time_install("BH", lib = target("lib")))
+}
 
 utils::remove.packages(c("MASS", "lattice", "BH"), lib = target("lib"))
 unlink(target("lib"), recursive = TRUE)
 # ===============================================================================================================
 
 # Write, then read, 1GB CSV =====================================================================================
+benchmark("Write CSV, 100MB", write_random_csv(target("100mb.csv"), 100*1024*1024))
+if (!short) {
 benchmark("Write CSV, 10KB", write_random_csv(target("10kb.csv"), 10*1024))
 benchmark("Write CSV, 1MB", write_random_csv(target("1mb.csv"), 1024*1024))
-benchmark("Write CSV, 100MB", write_random_csv(target("100mb.csv"), 100*1024*1024))
 benchmark("Write CSV, 1GB", write_random_csv(target("1gb.csv"), 1024*1024*1024))
+}
 
+benchmark("Read CSV, 100MB", system.time({ data.table::fread(target("100mb.csv")) }))
+if (!short) {
 benchmark("Read CSV, 10KB", system.time({ data.table::fread(target("10kb.csv")) }))
 benchmark("Read CSV, 1MB", system.time({ data.table::fread(target("1mb.csv")) }))
-benchmark("Read CSV, 100MB", system.time({ data.table::fread(target("100mb.csv")) }))
 benchmark("Read CSV, 1GB", system.time({ data.table::fread(target("1gb.csv")) }))
+}
 
+unlink(target("100mb.csv"))
+if (!short) {
 unlink(target("10kb.csv"))
 unlink(target("1mb.csv"))
-unlink(target("100mb.csv"))
 unlink(target("1gb.csv"))
+}
 # ===============================================================================================================
 
 # Parallel tests with 1GB readers/writers =======================================================================
-for (i in 1:4) {
+
+iters <- 2
+if (!short) {
+iters <- 4
+}
+
+for (i in 1:iters) {
   num_writers <- 2^i
   benchmark("DD write, 1GB", system.time({
     mclapply(1:num_writers, function(id) {
@@ -48,7 +71,7 @@ for (i in 1:4) {
   }), parallelism = num_writers)
 }
 
-for (i in 1:4) {
+for (i in 1:iters) {
   num_readers <- 2^i
   benchmark("DD read, 1GB", system.time({
     mclapply(1:num_readers, function(id) {
@@ -63,7 +86,8 @@ unlink(target("parallel_*.dat"))
 # ===============================================================================================================
 
 # Small files tests =============================================================================================
-for (i in 1:4) {
+
+for (i in 1:iters) {
   num_files <- 10 ^ i
   file_size <- 100*1024*1024 / num_files
 
@@ -82,7 +106,7 @@ for (i in 1:4) {
 # ===============================================================================================================
 
 # Parallel small file tests =====================================================================================
-for (i in 1:4) {
+for (i in 1:iters) {
   num_writers <- 2^i
   benchmark("DD write, 10MB over 1000 files", system.time({
     mclapply(1:num_writers, function(id) {
@@ -95,7 +119,7 @@ for (i in 1:4) {
   }), parallelism = num_writers)
 }
 
-for (i in 1:4) {
+for (i in 1:iters) {
   num_readers <- 2^i
   benchmark("DD read, 10MB over 1000 files", system.time({
     mclapply(1:num_readers, function(id) {
@@ -120,6 +144,7 @@ size_per_row <- size_100mb / num_rows
 fst_frame <- data.frame(x1 = runif(num_rows), x2 = runif(num_rows))
 write.fst(fst_frame, target("dataset.fst"))
 
+if (!short) {
 num_read <- 0
 benchmark("FST random reads, 100MB over 10*10MB reads", system.time({
   rows_to_read <- (10*1024*1024) / size_per_row
@@ -130,6 +155,7 @@ benchmark("FST random reads, 100MB over 10*10MB reads", system.time({
     num_read <- num_read + object.size(fst_subset)
   }
 }))
+}
 
 num_read <- 0
 benchmark("FST random reads, 100MB over 100*1MB reads", system.time({
@@ -142,6 +168,7 @@ benchmark("FST random reads, 100MB over 100*1MB reads", system.time({
   }
 }))
 
+if (!short) {
 num_read <- 0
 benchmark("FST random reads, 100MB over 1000*100KB reads", system.time({
   rows_to_read <- (100*1024) / size_per_row
@@ -152,7 +179,8 @@ benchmark("FST random reads, 100MB over 1000*100KB reads", system.time({
     num_read <- num_read + object.size(fst_subset)
   }
 }))
-
+}
+if (!short) {
 num_read <- 0
 benchmark("FST random reads, 100MB over 10000*10KB reads", system.time({
   rows_to_read <- (10*1024) / size_per_row
@@ -163,7 +191,7 @@ benchmark("FST random reads, 100MB over 10000*10KB reads", system.time({
     num_read <- num_read + object.size(fst_subset)
   }
 }))
-
+}
 unlink(target("dataset.fst"))
 #================================================================================================================
 
