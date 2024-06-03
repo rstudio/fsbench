@@ -9,7 +9,7 @@ short <- FALSE
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) >= 1) {
-  if (args[1] == "short" {
+  if (args[1] == "short") {
   short <- TRUE
   }
 }
