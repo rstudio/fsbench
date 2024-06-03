@@ -28,7 +28,11 @@ benchmark("Install lattice", time_install("lattice", lib = target("lib")))
 benchmark("Install BH", time_install("BH", lib = target("lib")))
 }
 
-utils::remove.packages(c("MASS", "lattice", "BH"), lib = target("lib"))
+utils::remove.packages(c("MASS"), lib = target("lib"))
+
+if (!short){
+utils::remove.packages(c("lattice", "BH"), lib = target("lib"))
+}
 unlink(target("lib"), recursive = TRUE)
 # ===============================================================================================================
 
