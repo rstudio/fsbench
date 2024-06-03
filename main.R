@@ -6,7 +6,7 @@ library(vroom)
 
 source("_functions.R")
 short <- FALSE
-short_test == "long"
+short_test <- "long"
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) >= 1) {
@@ -16,8 +16,6 @@ if (length(args) >= 1) {
 if (short_test == "short") {
 short <- TRUE
 }
-
-print(param)
 
 benchmark_begin()
 
