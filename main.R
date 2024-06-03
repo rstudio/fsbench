@@ -6,10 +6,14 @@ library(vroom)
 
 source("_functions.R")
 short <- FALSE
+short_test == "long"
 args <- commandArgs(trailingOnly = TRUE)
-short_test <- args[1]
 
-if short_test == "short" {
+if (length(args) >= 1) {
+  short_test <- args[1]
+}
+
+if (short_test == "short") {
 short <- TRUE
 }
 
