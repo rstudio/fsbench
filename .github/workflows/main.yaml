@@ -6,12 +6,12 @@ on:
   pull_request:
     branches: [github-actions,main]
 
-name: fsbench Run
+name: Validate fsbench
 
 permissions: read-all
 
 jobs:
-  R-CMD-check:
+  Run-fsbench:
     runs-on: ubuntu-latest
 #    env:
 #      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
