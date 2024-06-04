@@ -28,6 +28,14 @@ Two environment variables can be used to configure fsbench:
 
 * `OUTPUT_FILE` defaults to `./results-<date>-<time>.csv` and indicates the path where the benchmark results should be recorded, as CSV data. (The same results are always printed to the screen, in tabular form.)
 
+### Shortened Run
+
+```shell
+make short
+```
+This command runs the load test in a shortened form to allow for the quick assessment of a filesystem. It's not as comprehensive and doesn't load down the storage as heavily as the full run.
+
+
 ## Comparing results
 
 Once you have one or more results files from running the benchmarks, you can use the comparison tool to compare multiple runs across several filesystems. The comparison tool will average multiple runs for each distinct filesystem tested, and produce bar charts to compare performance between the different filesystems.
