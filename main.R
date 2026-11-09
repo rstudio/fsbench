@@ -207,15 +207,31 @@ benchmark("Read 14 days of CRAN logs with fread", system.time({
   }
 }))
 
-benchmark("Sample 5000 rows from each of 14 CRAN logs with vroom", system.time({
+# Free the last fread result (~1.3 GB) before the vroom task, outside the timers
+rm(fread_df)
+invisible(gc())
+
+# Each vroom_df holds a decompressed temp copy of its log in tempdir() (RAM when
+# /tmp is a tmpfs), released only when the object is garbage collected. Without
+# a forced gc these pile up and R gets OOM-killed on 4-8 GB machines. Time each
+# file separately and sum, so the gc (CPU/memory work, not filesystem) isn't
+# measured. benchmark() evaluates the block lazily, after dump_cache().
+benchmark("Sample 5000 rows from each of 14 CRAN logs with vroom", {
+  vroom_time <- NULL
   for (file in sort(dir(target("cranlogs"), full.names = TRUE))) {
     message(basename(file))
-    vroom_df <- vroom(file, progress = FALSE, col_types = "Dtdccccccd",
-      col_names = c("date","time","size","r_version","r_arch","r_os","package","version","country","ip_id")
-    )
-    sample(vroom_df$country, 5000)
+    file_time <- system.time({
+      vroom_df <- vroom(file, progress = FALSE, col_types = "Dtdccccccd",
+        col_names = c("date","time","size","r_version","r_arch","r_os","package","version","country","ip_id")
+      )
+      sample(vroom_df$country, 5000)
+    })
+    vroom_time <- if (is.null(vroom_time)) file_time else vroom_time + file_time
+    rm(vroom_df)
+    invisible(gc())
   }
-}))
+  vroom_time
+})
 # ===============================================================================================================
 
 benchmark_end()
